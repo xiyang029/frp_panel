@@ -1,63 +1,57 @@
 <template>
-  <div class="traffic-chart-container" v-loading="loading">
+  <n-spin :show="loading" class="traffic-chart-container">
     <div v-if="!loading && chartData.length > 0" class="chart-wrapper">
       <div class="y-axis">
-        <div class="y-label">{{ formatFileSize(maxVal) }}</div>
-        <div class="y-label">{{ formatFileSize(maxVal / 2) }}</div>
-        <div class="y-label">0</div>
+        <div>{{ formatFileSize(maxVal) }}</div>
+        <div>{{ formatFileSize(maxVal / 2) }}</div>
+        <div>0</div>
       </div>
 
       <div class="bars-area">
-        <!-- Grid Lines -->
         <div class="grid-line top"></div>
         <div class="grid-line middle"></div>
         <div class="grid-line bottom"></div>
 
         <div v-for="(item, index) in chartData" :key="index" class="day-column">
           <div class="bars-group">
-            <el-tooltip
-              :content="`In: ${formatFileSize(item.in)}`"
-              placement="top"
-            >
-              <div
-                class="bar bar-in"
-                :style="{ height: Math.max(item.inPercent, 1) + '%' }"
-              ></div>
-            </el-tooltip>
-            <el-tooltip
-              :content="`Out: ${formatFileSize(item.out)}`"
-              placement="top"
-            >
-              <div
-                class="bar bar-out"
-                :style="{ height: Math.max(item.outPercent, 1) + '%' }"
-              ></div>
-            </el-tooltip>
+            <n-tooltip placement="top">
+              <template #trigger>
+                <div class="bar bar-in" :style="{ height: Math.max(item.inPercent, 1) + '%' }"></div>
+              </template>
+              入站：{{ formatFileSize(item.in) }}
+            </n-tooltip>
+            <n-tooltip placement="top">
+              <template #trigger>
+                <div class="bar bar-out" :style="{ height: Math.max(item.outPercent, 1) + '%' }"></div>
+              </template>
+              出站：{{ formatFileSize(item.out) }}
+            </n-tooltip>
           </div>
           <div class="date-label">{{ item.date }}</div>
         </div>
       </div>
     </div>
 
-    <!-- Legend -->
     <div v-if="!loading && chartData.length > 0" class="legend">
-      <div class="legend-item"><span class="dot in"></span> Traffic In</div>
-      <div class="legend-item"><span class="dot out"></span> Traffic Out</div>
+      <div class="legend-item"><span class="dot in"></span>入站流量</div>
+      <div class="legend-item"><span class="dot out"></span>出站流量</div>
     </div>
 
-    <el-empty v-else-if="!loading" description="No traffic data" />
-  </div>
+    <n-empty v-else-if="!loading" description="暂无流量数据" />
+  </n-spin>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
+import { NEmpty, NSpin, NTooltip } from 'naive-ui'
 import { formatFileSize } from '../utils/format'
 import { getProxyTraffic } from '../api/proxy'
+import { createMessageHelpers } from '../naive'
 
 const props = defineProps<{
   proxyName: string
 }>()
+const message = createMessageHelpers()
 
 const loading = ref(false)
 const chartData = ref<
@@ -72,19 +66,15 @@ const chartData = ref<
 const maxVal = ref(0)
 
 const processData = (trafficIn: number[], trafficOut: number[]) => {
-  // Ensure we have arrays and reverse them (server returns newest first)
   const inArr = [...(trafficIn || [])].reverse()
   const outArr = [...(trafficOut || [])].reverse()
 
-  // Pad with zeros if less than 7 days
   while (inArr.length < 7) inArr.unshift(0)
   while (outArr.length < 7) outArr.unshift(0)
 
-  // Slice to last 7 entries just in case
   const finalIn = inArr.slice(-7)
   const finalOut = outArr.slice(-7)
 
-  // Calculate dates (last 7 days ending today)
   const dates: string[] = []
   const d = new Date()
   d.setDate(d.getDate() - 6)
@@ -94,12 +84,10 @@ const processData = (trafficIn: number[], trafficOut: number[]) => {
     d.setDate(d.getDate() + 1)
   }
 
-  // Find max value for scaling
   const maxIn = Math.max(...finalIn)
   const maxOut = Math.max(...finalOut)
-  maxVal.value = Math.max(maxIn, maxOut, 100) // Minimum scale 100 bytes
+  maxVal.value = Math.max(maxIn, maxOut, 100)
 
-  // Build chart data
   chartData.value = dates.map((date, i) => ({
     date,
     in: finalIn[i],
@@ -116,11 +104,7 @@ const fetchData = () => {
       processData(json.trafficIn, json.trafficOut)
     })
     .catch((err) => {
-      ElMessage({
-        showClose: true,
-        message: 'Get traffic info failed! ' + err,
-        type: 'warning',
-      })
+      message.warning('获取流量信息失败：' + err)
     })
     .finally(() => {
       loading.value = false
@@ -145,7 +129,6 @@ onMounted(() => {
   flex: 1;
   display: flex;
   gap: 10px;
-  position: relative;
   margin-bottom: 20px;
 }
 
@@ -156,9 +139,11 @@ onMounted(() => {
   text-align: right;
   font-size: 12px;
   color: #909399;
-  padding-bottom: 24px; /* Align with bars area excluding date labels */
-  height: calc(100% - 24px); /* Subtract date label height approx */
+  /* 移除多余的 height 估算，依赖父级 flex 布局和 padding 保持与柱子底部对齐 */
+  padding-bottom: 24px;
 }
+
+/* 移除了无意义的 y-label 样式定义，直接内联或不声明，因仅用于文本颜色继承 */
 
 .bars-area {
   flex: 1;
@@ -166,8 +151,8 @@ onMounted(() => {
   justify-content: space-between;
   align-items: flex-end;
   position: relative;
-  height: 100%;
-  padding-bottom: 24px; /* Space for date labels */
+  padding-bottom: 24px;
+  /* 柱子下方的日期预留空间 */
 }
 
 .grid-line {
@@ -186,26 +171,28 @@ html.dark .grid-line {
 .grid-line.top {
   top: 0;
 }
+
 .grid-line.middle {
-  top: 50%;
-  transform: translateY(-50%);
+  top: calc(50% - 12px);
+  /* 修正：扣除底部 padding 的一半，使网格线真正居中于柱子区域 */
 }
+
 .grid-line.bottom {
   bottom: 24px;
-} /* Align with bottom of bars */
+}
 
 .day-column {
   flex: 1;
-  height: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
   align-items: center;
   position: relative;
   z-index: 1;
+  /* 移除 height: 100% 和 justify-content，交给父级统一处理 */
 }
 
 .bars-group {
+  /* 占满从顶向下到 padding-bottom 的空间 */
   height: 100%;
   display: flex;
   align-items: flex-end;
@@ -234,13 +221,12 @@ html.dark .grid-line {
 
 .date-label {
   position: absolute;
-  bottom: -24px;
   font-size: 12px;
   color: #909399;
   width: 100%;
   text-align: center;
+  pointer-events: none; /* 🖱️ 让鼠标事件穿透文本，双重保险 */
 }
-
 .legend {
   display: flex;
   justify-content: center;
@@ -269,6 +255,7 @@ html.dark .legend-item {
 .dot.in {
   background-color: #5470c6;
 }
+
 .dot.out {
   background-color: #91cc75;
 }

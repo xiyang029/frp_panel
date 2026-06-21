@@ -3,8 +3,8 @@
     <div class="page-header">
       <div class="header-top">
         <div class="title-section">
-          <h1 class="page-title">Clients</h1>
-          <p class="page-subtitle">Manage connected clients and their status</p>
+          <h1 class="page-title">客户端列表</h1>
+          <p class="page-subtitle">查看已连接客户端及其在线状态。</p>
         </div>
         <div class="status-tabs">
           <button
@@ -24,17 +24,20 @@
       </div>
 
       <div class="search-section">
-        <el-input
-          v-model="searchText"
-          placeholder="Search clients..."
-          :prefix-icon="Search"
+        <n-input
+          v-model:value="searchText"
+          placeholder="搜索客户端名称、用户或标识"
           clearable
           class="search-input"
-        />
+        >
+          <template #prefix>
+            <n-icon><search-outline /></n-icon>
+          </template>
+        </n-input>
       </div>
     </div>
 
-    <div v-loading="loading" class="clients-content">
+    <n-spin :show="loading" class="clients-content">
       <div v-if="clients.length > 0" class="clients-list">
         <ClientCard
           v-for="client in clients"
@@ -43,19 +46,20 @@
         />
       </div>
       <div v-else-if="!loading" class="empty-state">
-        <el-empty description="No clients found" />
+        <n-empty description="暂无客户端" />
       </div>
-    </div>
+    </n-spin>
 
     <div v-if="total > 0" class="pagination-section">
-      <ElPagination
-        :current-page="page"
+      <n-pagination
+        :page="page"
         :page-size="pageSize"
         :page-sizes="[10, 20, 50, 100]"
-        :total="total"
-        layout="total, sizes, prev, pager, next"
-        @current-change="onPageChange"
-        @size-change="onPageSizeChange"
+        :item-count="total"
+        show-size-picker
+        show-quick-jumper
+        @update:page="onPageChange"
+        @update:page-size="onPageSizeChange"
       />
     </div>
   </div>
@@ -63,11 +67,12 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { ElMessage, ElPagination } from 'element-plus'
-import { Search } from '@element-plus/icons-vue'
+import { NEmpty, NIcon, NInput, NPagination, NSpin } from 'naive-ui'
+import { SearchOutline } from '@vicons/ionicons5'
 import { Client } from '../utils/client'
 import ClientCard from '../components/ClientCard.vue'
 import { getClientsV2 } from '../api/client'
+import { createMessageHelpers } from '../naive'
 
 const clients = ref<Client[]>([])
 const loading = ref(false)
@@ -76,6 +81,7 @@ const statusFilter = ref<'all' | 'online' | 'offline'>('all')
 const page = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
+const message = createMessageHelpers()
 
 let refreshTimer: number | null = null
 let searchDebounceTimer: number | null = null
@@ -84,17 +90,17 @@ let requestSeq = 0
 const statusTabs = computed(() => [
   {
     value: 'all' as const,
-    label: 'All',
+    label: '全部',
     count: statusFilter.value === 'all' ? total.value : null,
   },
   {
     value: 'online' as const,
-    label: 'Online',
+    label: '在线',
     count: statusFilter.value === 'online' ? total.value : null,
   },
   {
     value: 'offline' as const,
-    label: 'Offline',
+    label: '离线',
     count: statusFilter.value === 'offline' ? total.value : null,
   },
 ])
@@ -124,11 +130,7 @@ const fetchData = async (silent = false) => {
     pageSize.value = data.pageSize
   } catch (error: any) {
     if (seq !== requestSeq) return
-    ElMessage({
-      showClose: true,
-      message: 'Failed to fetch clients: ' + error.message,
-      type: 'error',
-    })
+    message.error('获取客户端列表失败：' + error.message)
   } finally {
     if (seq === requestSeq) {
       loading.value = false
@@ -227,14 +229,14 @@ onUnmounted(() => {
 .page-title {
   font-size: 28px;
   font-weight: 600;
-  color: var(--el-text-color-primary);
+  color: var(--app-text);
   margin: 0;
   line-height: 1.2;
 }
 
 .page-subtitle {
   font-size: 14px;
-  color: var(--el-text-color-secondary);
+  color: var(--app-text-muted);
   margin: 0;
 }
 
@@ -248,10 +250,10 @@ onUnmounted(() => {
   align-items: center;
   gap: 8px;
   padding: 8px 16px;
-  border: 1px solid var(--el-border-color);
+  border: 1px solid var(--app-border);
   border-radius: 20px;
-  background: var(--el-bg-color);
-  color: var(--el-text-color-regular);
+  background: var(--app-panel-strong);
+  color: var(--app-text-muted);
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -259,33 +261,33 @@ onUnmounted(() => {
 }
 
 .status-tab:hover {
-  border-color: var(--el-border-color-darker);
-  background: var(--el-fill-color-light);
+  border-color: var(--app-accent);
+  background: var(--app-panel);
 }
 
 .status-tab.active {
-  background: var(--el-fill-color-dark);
-  border-color: var(--el-text-color-primary);
-  color: var(--el-text-color-primary);
+  background: var(--app-accent-soft);
+  border-color: var(--app-accent);
+  color: var(--app-text);
 }
 
 .status-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background-color: var(--el-text-color-secondary);
+  background-color: var(--app-text-muted);
 }
 
 .status-dot.online {
-  background-color: var(--el-color-success);
+  background-color: #16a34a;
 }
 
 .status-dot.offline {
-  background-color: var(--el-text-color-placeholder);
+  background-color: #94a3b8;
 }
 
 .status-dot.all {
-  background-color: var(--el-text-color-regular);
+  background-color: var(--app-text);
 }
 
 .tab-count {
@@ -297,24 +299,9 @@ onUnmounted(() => {
   width: 100%;
 }
 
-.search-input :deep(.el-input__wrapper) {
-  border-radius: 12px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-  padding: 8px 16px;
-  border: 1px solid var(--el-border-color);
-  transition: all 0.2s;
-  height: 48px;
-  font-size: 15px;
-}
-
-.search-input :deep(.el-input__wrapper:hover) {
-  border-color: var(--el-border-color-darker);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
-}
-
-.search-input :deep(.el-input__wrapper.is-focus) {
-  border-color: var(--el-color-primary);
-  box-shadow: 0 0 0 1px var(--el-color-primary);
+.search-input {
+  --n-height: 48px;
+  --n-border-radius: 12px;
 }
 
 .clients-content {
@@ -334,15 +321,6 @@ onUnmounted(() => {
 .pagination-section {
   display: flex;
   justify-content: flex-end;
-}
-
-/* Dark mode adjustments */
-html.dark .status-tab {
-  background: var(--el-bg-color-overlay);
-}
-
-html.dark .status-tab.active {
-  background: var(--el-fill-color);
 }
 
 @media (max-width: 640px) {

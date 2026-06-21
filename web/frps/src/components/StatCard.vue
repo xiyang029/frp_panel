@@ -1,35 +1,36 @@
 <template>
-  <el-card
+  <n-card
     class="stat-card"
     :class="{ clickable: !!to }"
-    :body-style="{ padding: '20px' }"
-    shadow="hover"
+    :hoverable="!!to"
+    size="small"
     @click="handleClick"
   >
     <div class="stat-card-content">
       <div class="stat-icon" :class="`icon-${type}`">
-        <component :is="iconComponent" class="icon" />
+        <n-icon class="icon"><component :is="iconComponent" /></n-icon>
       </div>
       <div class="stat-info">
         <div class="stat-value">{{ value }}</div>
         <div class="stat-label">{{ label }}</div>
       </div>
-      <el-icon v-if="to" class="arrow-icon"><ArrowRight /></el-icon>
+      <n-icon v-if="to" class="arrow-icon"><chevron-forward-outline /></n-icon>
     </div>
     <div v-if="subtitle" class="stat-subtitle">{{ subtitle }}</div>
-  </el-card>
+  </n-card>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { NCard, NIcon } from 'naive-ui'
 import {
-  User,
-  Connection,
-  DataAnalysis,
-  Promotion,
-  ArrowRight,
-} from '@element-plus/icons-vue'
+  AnalyticsOutline,
+  ChevronForwardOutline,
+  PeopleOutline,
+  PulseOutline,
+  SwapHorizontalOutline,
+} from '@vicons/ionicons5'
 
 interface Props {
   label: string
@@ -45,21 +46,23 @@ const props = withDefaults(defineProps<Props>(), {
 
 const router = useRouter()
 
+// 根据统计类型选择对应的概览图标。
 const iconComponent = computed(() => {
   switch (props.type) {
     case 'clients':
-      return User
+      return PeopleOutline
     case 'proxies':
-      return Connection
+      return SwapHorizontalOutline
     case 'connections':
-      return DataAnalysis
+      return AnalyticsOutline
     case 'traffic':
-      return Promotion
+      return PulseOutline
     default:
-      return User
+      return PeopleOutline
   }
 })
 
+// 存在跳转地址时，点击统计卡片进入目标页面。
 const handleClick = () => {
   if (props.to) {
     router.push(props.to)
@@ -69,9 +72,7 @@ const handleClick = () => {
 
 <style scoped>
 .stat-card {
-  border-radius: 12px;
   transition: all 0.3s ease;
-  border: 1px solid #e4e7ed;
 }
 
 .stat-card.clickable {
@@ -80,16 +81,10 @@ const handleClick = () => {
 
 .stat-card.clickable:hover {
   transform: translateY(-4px);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
 }
 
 .stat-card.clickable:hover .arrow-icon {
   transform: translateX(4px);
-}
-
-html.dark .stat-card {
-  border-color: #3a3d5c;
-  background: #27293d;
 }
 
 .stat-card-content {
@@ -99,14 +94,10 @@ html.dark .stat-card {
 }
 
 .arrow-icon {
-  color: #909399;
+  color: var(--app-text-faint);
   font-size: 18px;
   transition: transform 0.2s ease;
   flex-shrink: 0;
-}
-
-html.dark .arrow-icon {
-  color: #9ca3af;
 }
 
 .stat-icon {
@@ -169,34 +160,21 @@ html.dark .icon-traffic {
   font-size: 28px;
   font-weight: 500;
   line-height: 1.2;
-  color: #303133;
+  color: var(--app-text);
   margin-bottom: 4px;
-}
-
-html.dark .stat-value {
-  color: #e5e7eb;
 }
 
 .stat-label {
   font-size: 14px;
-  color: #909399;
+  color: var(--app-text-muted);
   font-weight: 500;
-}
-
-html.dark .stat-label {
-  color: #9ca3af;
 }
 
 .stat-subtitle {
   margin-top: 12px;
   padding-top: 12px;
-  border-top: 1px solid #e4e7ed;
+  border-top: 1px solid var(--app-border);
   font-size: 12px;
-  color: #909399;
-}
-
-html.dark .stat-subtitle {
-  border-top-color: #3a3d5c;
-  color: #9ca3af;
+  color: var(--app-text-muted);
 }
 </style>

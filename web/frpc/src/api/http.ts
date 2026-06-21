@@ -1,5 +1,7 @@
 // http.ts - Base HTTP client
 
+import { clearDashboardAuth, buildBasicAuthHeader } from '../utils/auth'
+
 class HTTPError extends Error {
   status: number
   statusText: string
@@ -12,13 +14,26 @@ class HTTPError extends Error {
 }
 
 async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
+  const headers = new Headers(options.headers ?? {})
+  const authHeader = buildBasicAuthHeader()
+  if (authHeader && !headers.has('Authorization')) {
+    headers.set('Authorization', authHeader)
+  }
+
   const defaultOptions: RequestInit = {
     credentials: 'include',
   }
 
-  const response = await fetch(url, { ...defaultOptions, ...options })
+  const response = await fetch(url, { ...defaultOptions, ...options, headers })
 
   if (!response.ok) {
+    if (response.status === 401) {
+      clearDashboardAuth()
+      if (!window.location.hash.startsWith('#/login')) {
+        const next = encodeURIComponent(window.location.hash || '#/')
+        window.location.hash = `#/login?next=${next}`
+      }
+    }
     throw new HTTPError(
       response.status,
       response.statusText,
@@ -42,7 +57,7 @@ export const http = {
   get: <T>(url: string, options?: RequestInit) =>
     request<T>(url, { ...options, method: 'GET' }),
   post: <T>(url: string, body?: any, options?: RequestInit) => {
-    const headers: HeadersInit = { ...options?.headers }
+    const headers = new Headers(options?.headers ?? {})
     let requestBody = body
 
     if (
@@ -51,8 +66,8 @@ export const http = {
       !(body instanceof FormData) &&
       !(body instanceof Blob)
     ) {
-      if (!('Content-Type' in headers)) {
-        ;(headers as any)['Content-Type'] = 'application/json'
+      if (!headers.has('Content-Type')) {
+        headers.set('Content-Type', 'application/json')
       }
       requestBody = JSON.stringify(body)
     }
@@ -65,7 +80,7 @@ export const http = {
     })
   },
   put: <T>(url: string, body?: any, options?: RequestInit) => {
-    const headers: HeadersInit = { ...options?.headers }
+    const headers = new Headers(options?.headers ?? {})
     let requestBody = body
 
     if (
@@ -74,8 +89,8 @@ export const http = {
       !(body instanceof FormData) &&
       !(body instanceof Blob)
     ) {
-      if (!('Content-Type' in headers)) {
-        ;(headers as any)['Content-Type'] = 'application/json'
+      if (!headers.has('Content-Type')) {
+        headers.set('Content-Type', 'application/json')
       }
       requestBody = JSON.stringify(body)
     }

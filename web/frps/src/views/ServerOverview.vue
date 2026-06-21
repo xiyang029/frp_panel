@@ -1,172 +1,60 @@
 <template>
-  <div class="server-overview">
-    <el-row :gutter="20" class="stats-row">
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard
-          label="Clients"
-          :value="data.clientCounts"
-          type="clients"
-          subtitle="Connected clients"
-          to="/clients"
-        />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard
-          label="Proxies"
-          :value="data.proxyCounts"
-          type="proxies"
-          subtitle="Active proxies"
-          to="/proxies/tcp"
-        />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard
-          label="Connections"
-          :value="data.curConns"
-          type="connections"
-          subtitle="Current connections"
-        />
-      </el-col>
-      <el-col :xs="24" :sm="12" :lg="6">
-        <StatCard
-          label="Traffic"
-          :value="formatTrafficTotal()"
-          type="traffic"
-          subtitle="Total today"
-        />
-      </el-col>
-    </el-row>
-
-    <el-row :gutter="20" class="charts-row">
-      <el-col :xs="24" :md="12">
-        <el-card class="chart-card" shadow="hover">
-          <template #header>
-            <div class="card-header">
-              <span class="card-title">Network Traffic</span>
-              <el-tag size="small" type="info">Today</el-tag>
-            </div>
-          </template>
-          <div class="traffic-summary">
-            <div class="traffic-item in">
-              <div class="traffic-icon">
-                <el-icon><Download /></el-icon>
-              </div>
-              <div class="traffic-info">
-                <div class="label">Inbound</div>
-                <div class="value">
-                  {{ formatFileSize(data.totalTrafficIn) }}
-                </div>
-              </div>
-            </div>
-            <div class="traffic-divider"></div>
-            <div class="traffic-item out">
-              <div class="traffic-icon">
-                <el-icon><Upload /></el-icon>
-              </div>
-              <div class="traffic-info">
-                <div class="label">Outbound</div>
-                <div class="value">
-                  {{ formatFileSize(data.totalTrafficOut) }}
-                </div>
-              </div>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :xs="24" :md="12">
-        <el-card class="chart-card" shadow="hover">
-          <template #header>
-            <div class="card-header">
-              <span class="card-title">Proxy Types</span>
-              <el-tag size="small" type="info">Now</el-tag>
-            </div>
-          </template>
-          <div class="proxy-types-grid">
-            <div
-              v-for="(count, type) in data.proxyTypeCounts"
-              :key="type"
-              class="proxy-type-item"
-              v-show="count > 0"
-            >
-              <div class="proxy-type-name">{{ type.toUpperCase() }}</div>
-              <div class="proxy-type-count">{{ count }}</div>
-            </div>
-            <div v-if="!hasActiveProxies" class="no-data">
-              No active proxies
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-    </el-row>
-
-    <el-card class="config-card" shadow="hover">
-      <template #header>
-        <div class="card-header">
-          <span class="card-title">Server Configuration</span>
-          <el-tag size="small" type="success">v{{ data.version }}</el-tag>
-        </div>
-      </template>
-      <div class="config-grid">
-        <div class="config-item">
-          <span class="config-label">Bind Port</span>
-          <span class="config-value">{{ data.bindPort }}</span>
-        </div>
-        <div class="config-item" v-if="data.kcpBindPort != 0">
-          <span class="config-label">KCP Port</span>
-          <span class="config-value">{{ data.kcpBindPort }}</span>
-        </div>
-        <div class="config-item" v-if="data.quicBindPort != 0">
-          <span class="config-label">QUIC Port</span>
-          <span class="config-value">{{ data.quicBindPort }}</span>
-        </div>
-        <div class="config-item" v-if="data.vhostHTTPPort != 0">
-          <span class="config-label">HTTP Port</span>
-          <span class="config-value">{{ data.vhostHTTPPort }}</span>
-        </div>
-        <div class="config-item" v-if="data.vhostHTTPSPort != 0">
-          <span class="config-label">HTTPS Port</span>
-          <span class="config-value">{{ data.vhostHTTPSPort }}</span>
-        </div>
-        <div class="config-item" v-if="data.tcpmuxHTTPConnectPort != 0">
-          <span class="config-label">TCPMux Port</span>
-          <span class="config-value">{{ data.tcpmuxHTTPConnectPort }}</span>
-        </div>
-        <div class="config-item" v-if="data.subdomainHost != ''">
-          <span class="config-label">Subdomain Host</span>
-          <span class="config-value">{{ data.subdomainHost }}</span>
-        </div>
-        <div class="config-item">
-          <span class="config-label">Max Pool Count</span>
-          <span class="config-value">{{ data.maxPoolCount }}</span>
-        </div>
-        <div class="config-item">
-          <span class="config-label">Max Ports/Client</span>
-          <span class="config-value">{{ data.maxPortsPerClient }}</span>
-        </div>
-        <div class="config-item" v-if="data.allowPortsStr != ''">
-          <span class="config-label">Allow Ports</span>
-          <span class="config-value">{{ data.allowPortsStr }}</span>
-        </div>
-        <div class="config-item" v-if="data.tlsForce">
-          <span class="config-label">TLS Force</span>
-          <el-tag size="small" type="warning">Enabled</el-tag>
-        </div>
-        <div class="config-item">
-          <span class="config-label">Heartbeat Timeout</span>
-          <span class="config-value">{{ data.heartbeatTimeout }}s</span>
-        </div>
+  <section class="overview-page">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">服务端总览</h1>
+        <p class="page-subtitle">查看当前 frps 运行指标与服务端运行参数。</p>
       </div>
-    </el-card>
-  </div>
+      <n-button secondary @click="fetchData" :loading="loading">刷新</n-button>
+    </div>
+
+    <div class="stats-grid">
+      <n-card v-for="item in statsCards" :key="item.label" :bordered="false" class="stat-card">
+        <div class="stat-label">{{ item.label }}</div>
+        <div class="stat-value">{{ item.value }}</div>
+        <div class="stat-subtitle">{{ item.subtitle }}</div>
+      </n-card>
+    </div>
+
+    <div class="content-grid">
+      <n-card :bordered="false" class="panel-card">
+        <template #header>
+          <div class="panel-title">代理类型</div>
+        </template>
+        <div v-if="proxyTypeEntries.length" class="proxy-grid">
+          <div v-for="[type, count] in proxyTypeEntries" :key="type" class="proxy-pill">
+            <span>{{ type.toUpperCase() }}</span>
+            <strong>{{ count }}</strong>
+          </div>
+        </div>
+        <n-empty v-else description="暂无活跃代理" />
+      </n-card>
+
+      <n-card :bordered="false" class="panel-card">
+        <template #header>
+          <div class="panel-title">运行参数</div>
+        </template>
+        <div class="config-grid">
+          <div v-for="item in configItems" :key="item.label" class="config-item">
+            <span class="config-label">{{ item.label }}</span>
+            <span class="config-value">{{ item.value }}</span>
+          </div>
+        </div>
+      </n-card>
+    </div>
+
+  </section>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
-import { ElMessage } from 'element-plus'
+import { computed, ref } from 'vue'
+import { NButton, NCard, NEmpty } from 'naive-ui'
 import { formatFileSize } from '../utils/format'
-import { Download, Upload } from '@element-plus/icons-vue'
-import StatCard from '../components/StatCard.vue'
+import { createMessageHelpers } from '../naive'
 import { getServerInfo } from '../api/server'
+
+const message = createMessageHelpers()
+const loading = ref(false)
 
 const data = ref({
   version: '',
@@ -178,284 +66,191 @@ const data = ref({
   tcpmuxHTTPConnectPort: 0,
   subdomainHost: '',
   maxPoolCount: 0,
-  maxPortsPerClient: '',
+  maxPortsPerClient: 0,
+  heartbeatTimeout: 0,
   allowPortsStr: '',
   tlsForce: false,
-  heartbeatTimeout: 0,
   clientCounts: 0,
   curConns: 0,
-  proxyCounts: 0,
   totalTrafficIn: 0,
   totalTrafficOut: 0,
-  proxyTypeCounts: {} as Record<string, number>,
+  proxyTypeCount: {} as Record<string, number>,
 })
 
-const hasActiveProxies = computed(() => {
-  return Object.values(data.value.proxyTypeCounts).some((c) => c > 0)
-})
+const statsCards = computed(() => [
+  { label: '客户端', value: data.value.clientCounts, subtitle: '当前已连接实例' },
+  {
+    label: '代理数',
+    value: Object.values(data.value.proxyTypeCount).reduce((sum, count) => sum + count, 0),
+    subtitle: '当前活跃代理',
+  },
+  { label: '连接数', value: data.value.curConns, subtitle: '实时连接数' },
+  {
+    label: '今日流量',
+    value: formatFileSize(data.value.totalTrafficIn + data.value.totalTrafficOut),
+    subtitle: '入站 + 出站',
+  },
+])
 
-const formatTrafficTotal = () => {
-  const total = data.value.totalTrafficIn + data.value.totalTrafficOut
-  return formatFileSize(total)
-}
+const proxyTypeEntries = computed(() =>
+  Object.entries(data.value.proxyTypeCount).filter(([, count]) => count > 0),
+)
+
+const configItems = computed(() => [
+  { label: '版本', value: `v${data.value.version}` },
+  { label: 'Bind Port', value: data.value.bindPort || '-' },
+  { label: 'KCP Port', value: data.value.kcpBindPort || '-' },
+  { label: 'QUIC Port', value: data.value.quicBindPort || '-' },
+  { label: 'HTTP Port', value: data.value.vhostHTTPPort || '-' },
+  { label: 'HTTPS Port', value: data.value.vhostHTTPSPort || '-' },
+  { label: 'TCPMux Port', value: data.value.tcpmuxHTTPConnectPort || '-' },
+  { label: 'Subdomain Host', value: data.value.subdomainHost || '-' },
+  { label: 'Max Pool Count', value: data.value.maxPoolCount || '-' },
+  {
+    label: 'Max Ports / Client',
+    value: data.value.maxPortsPerClient === 0 ? 'no limit' : data.value.maxPortsPerClient,
+  },
+  { label: 'Allow Ports', value: data.value.allowPortsStr || '-' },
+  { label: 'TLS Force', value: data.value.tlsForce ? 'enabled' : 'disabled' },
+  { label: 'Heartbeat Timeout', value: `${data.value.heartbeatTimeout}s` },
+])
 
 const fetchData = async () => {
+  loading.value = true
   try {
-    const json = await getServerInfo()
-    data.value.version = json.version
-    data.value.bindPort = json.bindPort
-    data.value.kcpBindPort = json.kcpBindPort
-    data.value.quicBindPort = json.quicBindPort
-    data.value.vhostHTTPPort = json.vhostHTTPPort
-    data.value.vhostHTTPSPort = json.vhostHTTPSPort
-    data.value.tcpmuxHTTPConnectPort = json.tcpmuxHTTPConnectPort
-    data.value.subdomainHost = json.subdomainHost
-    data.value.maxPoolCount = json.maxPoolCount
-    data.value.maxPortsPerClient = String(json.maxPortsPerClient)
-    if (data.value.maxPortsPerClient == '0') {
-      data.value.maxPortsPerClient = 'no limit'
+    const info = await getServerInfo()
+    data.value = {
+      ...data.value,
+      ...info,
+      proxyTypeCount: info.proxyTypeCount || {},
     }
-    data.value.allowPortsStr = json.allowPortsStr
-    data.value.tlsForce = json.tlsForce
-    data.value.heartbeatTimeout = json.heartbeatTimeout
-    data.value.clientCounts = json.clientCounts
-    data.value.curConns = json.curConns
-    data.value.totalTrafficIn = json.totalTrafficIn
-    data.value.totalTrafficOut = json.totalTrafficOut
-    data.value.proxyTypeCounts = json.proxyTypeCount || {}
-
-    data.value.proxyCounts = 0
-    if (json.proxyTypeCount != null) {
-      Object.values(json.proxyTypeCount).forEach((count: any) => {
-        data.value.proxyCounts += count || 0
-      })
-    }
-  } catch {
-    ElMessage({
-      showClose: true,
-      message: 'Get server info from frps failed!',
-      type: 'error',
-    })
+  } catch (err: any) {
+    message.error('获取服务端信息失败: ' + (err.message || '未知错误'))
+  } finally {
+    loading.value = false
   }
 }
 
-onMounted(() => {
-  fetchData()
-})
+fetchData()
 </script>
 
 <style scoped>
-.server-overview {
-  padding: 0;
+.overview-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
-.stats-row {
-  margin-bottom: 20px;
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
 }
 
-.charts-row {
-  margin-bottom: 20px;
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
 }
 
-.chart-card {
-  border-radius: 12px;
-  border: 1px solid #e4e7ed;
-  height: 100%;
+.stat-card,
+.panel-card {
+  background: var(--app-panel);
+  backdrop-filter: blur(16px);
+  box-shadow: var(--app-shadow);
 }
 
-html.dark .chart-card {
-  border-color: #3a3d5c;
-  background: #27293d;
+.stat-label {
+  font-size: 13px;
+  color: var(--app-text-muted);
 }
 
-.config-card {
-  border-radius: 12px;
-  border: 1px solid #e4e7ed;
-  margin-bottom: 20px;
+.stat-value {
+  margin-top: 10px;
+  font-size: 30px;
+  font-weight: 800;
+  color: var(--app-text);
 }
 
-html.dark .config-card {
-  border-color: #3a3d5c;
-  background: #27293d;
+.stat-subtitle {
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--app-text-muted);
 }
 
-.card-header {
+.content-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  gap: 16px;
+}
+
+.panel-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--app-text);
+}
+
+.proxy-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+}
+
+.proxy-pill {
   display: flex;
   justify-content: space-between;
   align-items: center;
-}
-
-.card-title {
-  font-size: 16px;
-  font-weight: 500;
-  color: #303133;
-}
-
-html.dark .card-title {
-  color: #e5e7eb;
-}
-
-.traffic-summary {
-  display: flex;
-  align-items: center;
-  justify-content: space-around;
-  min-height: 120px;
-  padding: 10px 0;
-}
-
-.traffic-item {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.traffic-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-}
-
-.traffic-item.in .traffic-icon {
-  background: rgba(84, 112, 198, 0.1);
-  color: #5470c6;
-}
-
-.traffic-item.out .traffic-icon {
-  background: rgba(145, 204, 117, 0.1);
-  color: #91cc75;
-}
-
-.traffic-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.traffic-info .label {
-  font-size: 14px;
-  color: #909399;
-}
-
-.traffic-info .value {
-  font-size: 24px;
-  font-weight: 500;
-  color: #303133;
-}
-
-html.dark .traffic-info .value {
-  color: #e5e7eb;
-}
-
-.traffic-divider {
-  width: 1px;
-  height: 60px;
-  background: #e4e7ed;
-}
-
-html.dark .traffic-divider {
-  background: #3a3d5c;
-}
-
-.proxy-types-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-  gap: 16px;
-  min-height: 120px;
-  align-content: center;
-  padding: 10px 0;
-}
-
-.proxy-type-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 12px;
-  background: #f8f9fa;
-  border-radius: 8px;
-}
-
-html.dark .proxy-type-item {
-  background: #1e1e2d;
-}
-
-.proxy-type-name {
-  font-size: 12px;
-  color: #909399;
-  font-weight: 500;
-  margin-bottom: 4px;
-}
-
-.proxy-type-count {
-  font-size: 20px;
-  font-weight: 500;
-  color: #303133;
-}
-
-html.dark .proxy-type-count {
-  color: #e5e7eb;
-}
-
-.no-data {
-  grid-column: 1 / -1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  color: #909399;
-  font-size: 14px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--app-accent-soft);
+  color: var(--app-text);
 }
 
 .config-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
 }
 
 .config-item {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 12px;
-  background: #f8f9fa;
-  border-radius: 8px;
-  transition: background 0.2s;
-}
-
-html.dark .config-item {
-  background: #1e1e2d;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--app-border);
 }
 
 .config-label {
+  display: block;
   font-size: 12px;
-  color: #909399;
-  font-weight: 500;
-}
-
-html.dark .config-label {
-  color: #9ca3af;
+  color: var(--app-text-muted);
 }
 
 .config-value {
+  display: block;
+  margin-top: 6px;
   font-size: 14px;
-  color: #303133;
-  font-weight: 500;
+  font-weight: 700;
+  color: var(--app-text);
   word-break: break-all;
 }
 
-html.dark .config-value {
-  color: #e5e7eb;
+@media (max-width: 1024px) {
+  .stats-grid,
+  .content-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
-@media (max-width: 768px) {
-  .chart-container {
-    height: 250px;
+@media (max-width: 767px) {
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
   }
 
-  .config-grid {
-    grid-template-columns: repeat(2, 1fr);
+  .stats-grid,
+  .content-grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>

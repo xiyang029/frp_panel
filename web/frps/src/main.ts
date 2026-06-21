@@ -1,10 +1,9 @@
 import { createApp } from 'vue'
-import 'element-plus/theme-chalk/dark/css-vars.css'
+import 'vfonts/Lato.css'
+import 'vfonts/FiraCode.css'
 import App from './App.vue'
 import router from './router'
-
-import './assets/css/var.css'
-import './assets/css/dark.css'
+import '../../common/base.css'
 
 const app = createApp(App)
 

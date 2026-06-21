@@ -2,21 +2,21 @@ export function formatDistanceToNow(date: Date): string {
   const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000)
 
   let interval = seconds / 31536000
-  if (interval > 1) return Math.floor(interval) + ' years ago'
+  if (interval > 1) return Math.floor(interval) + ' 年前'
 
   interval = seconds / 2592000
-  if (interval > 1) return Math.floor(interval) + ' months ago'
+  if (interval > 1) return Math.floor(interval) + ' 个月前'
 
   interval = seconds / 86400
-  if (interval > 1) return Math.floor(interval) + ' days ago'
+  if (interval > 1) return Math.floor(interval) + ' 天前'
 
   interval = seconds / 3600
-  if (interval > 1) return Math.floor(interval) + ' hours ago'
+  if (interval > 1) return Math.floor(interval) + ' 小时前'
 
   interval = seconds / 60
-  if (interval > 1) return Math.floor(interval) + ' minutes ago'
+  if (interval > 1) return Math.floor(interval) + ' 分钟前'
 
-  return Math.floor(seconds) + ' seconds ago'
+  return Math.floor(seconds) + ' 秒前'
 }
 
 export function formatFileSize(bytes: number): string {

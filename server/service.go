@@ -126,11 +126,17 @@ type Service struct {
 	tlsConfig *tls.Config
 
 	cfg *v1.ServerConfig
+	// configFilePath records the source config file for dashboard edits.
+	configFilePath string
 
 	// service context
 	ctx context.Context
 	// call cancel to stop service
 	cancel context.CancelFunc
+}
+
+func (svr *Service) SetConfigFilePath(path string) {
+	svr.configFilePath = path
 }
 
 func NewService(cfg *v1.ServerConfig) (*Service, error) {

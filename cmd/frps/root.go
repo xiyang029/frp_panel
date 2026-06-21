@@ -18,7 +18,9 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -109,6 +111,13 @@ func Execute() {
 }
 
 func runServer(cfg *v1.ServerConfig) (err error) {
+	if delayMsText := os.Getenv("FRPS_RESTART_DELAY_MS"); delayMsText != "" {
+		delayMs, parseErr := strconv.Atoi(delayMsText)
+		if parseErr == nil && delayMs > 0 {
+			time.Sleep(time.Duration(delayMs) * time.Millisecond)
+		}
+	}
+
 	log.InitLogger(cfg.Log.To, cfg.Log.Level, int(cfg.Log.MaxDays), cfg.Log.DisablePrintColor)
 
 	if cfgFile != "" {
@@ -121,6 +130,7 @@ func runServer(cfg *v1.ServerConfig) (err error) {
 	if err != nil {
 		return err
 	}
+	svr.SetConfigFilePath(cfgFile)
 	log.Infof("frps started successfully")
 	svr.Run(context.Background())
 	return

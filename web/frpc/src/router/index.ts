@@ -1,6 +1,6 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
-import { ElMessage } from 'element-plus'
 import ClientConfigure from '../views/ClientConfigure.vue'
+import LoginView from '../views/LoginView.vue'
 import ProxyDetail from '../views/ProxyDetail.vue'
 import ProxyEdit from '../views/ProxyEdit.vue'
 import ProxyList from '../views/ProxyList.vue'
@@ -8,10 +8,17 @@ import VisitorDetail from '../views/VisitorDetail.vue'
 import VisitorEdit from '../views/VisitorEdit.vue'
 import VisitorList from '../views/VisitorList.vue'
 import { useProxyStore } from '../stores/proxy'
+import { hasDashboardAuth } from '../utils/auth'
 
 const router = createRouter({
   history: createWebHashHistory(),
   routes: [
+    {
+      path: '/login',
+      name: 'Login',
+      component: LoginView,
+      meta: { public: true },
+    },
     {
       path: '/',
       redirect: '/proxies',
@@ -69,6 +76,13 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to) => {
+  if (!to.meta.public && !hasDashboardAuth()) {
+    return {
+      name: 'Login',
+      query: { next: encodeURIComponent(to.fullPath) },
+    }
+  }
+
   if (!to.matched.some((record) => record.meta.requiresStore)) {
     return true
   }
@@ -79,9 +93,6 @@ router.beforeEach(async (to) => {
     return true
   }
 
-  ElMessage.warning(
-    'Store is disabled. Enable Store in frpc config to create or edit store entries.',
-  )
   return { name: 'ProxyList' }
 })
 

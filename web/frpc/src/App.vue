@@ -1,96 +1,137 @@
 <template>
-  <div id="app">
-    <header class="header">
-      <div class="header-content">
-        <div class="brand-section">
-          <button v-if="isMobile" class="hamburger-btn" @click="toggleSidebar" aria-label="Toggle menu">
-            <span class="hamburger-icon">&#9776;</span>
-          </button>
-          <div class="logo-wrapper">
-            <LogoIcon class="logo-icon" />
-          </div>
-          <span class="divider">/</span>
-          <span class="brand-name">frp</span>
-          <span class="badge">Client</span>
-        </div>
+  <n-config-provider
+    :locale="locale"
+    :date-locale="dateLocale"
+    :theme="theme"
+    :theme-overrides="themeOverrides"
+  >
+    <n-loading-bar-provider>
+      <n-dialog-provider>
+        <n-notification-provider>
+          <n-message-provider>
+            <naive-bridge />
+            <div id="app-shell">
+              <template v-if="route.name !== 'Login'">
+                <header class="header">
+                  <div class="header-content">
+                    <div class="brand-section">
+                      <button
+                        v-if="isMobile"
+                        class="icon-button"
+                        type="button"
+                        @click="toggleSidebar"
+                        aria-label="切换导航"
+                      >
+                        <n-icon :size="20"><MenuOutline /></n-icon>
+                      </button>
+                      <div class="logo-wrapper">
+                        <LogoIcon class="logo-icon" />
+                      </div>
+                      <div class="brand-copy">
+                        <span class="brand-name">frpc 工作台</span>
+                        <span class="brand-subtitle">客户端代理、访客与配置管理</span>
+                      </div>
+                    </div>
 
-        <div class="header-controls">
-          <a
-            class="github-link"
-            href="https://github.com/fatedier/frp"
-            target="_blank"
-            aria-label="GitHub"
-          >
-            <GitHubIcon class="github-icon" />
-          </a>
-          <el-switch
-            v-model="isDark"
-            inline-prompt
-            :active-icon="Moon"
-            :inactive-icon="Sunny"
-            class="theme-switch"
-          />
-        </div>
-      </div>
-    </header>
+                    <div class="header-controls">
+                      <n-switch v-model:value="isDark">
+                        <template #checked-icon>
+                          <n-icon><Moon /></n-icon>
+                        </template>
+                        <template #unchecked-icon>
+                          <n-icon><Sunny /></n-icon>
+                        </template>
+                      </n-switch>
+                    </div>
+                  </div>
+                </header>
 
-    <div class="layout">
-      <!-- Mobile overlay -->
-      <div
-        v-if="isMobile && sidebarOpen"
-        class="sidebar-overlay"
-        @click="closeSidebar"
-      />
+                <div class="layout">
+                  <div
+                    v-if="isMobile && sidebarOpen"
+                    class="sidebar-overlay"
+                    @click="closeSidebar"
+                  />
 
-      <aside class="sidebar" :class="{ 'mobile-open': isMobile && sidebarOpen }">
-        <nav class="sidebar-nav">
-          <router-link
-            to="/proxies"
-            class="sidebar-link"
-            :class="{ active: route.path.startsWith('/proxies') }"
-            @click="closeSidebar"
-          >
-            Proxies
-          </router-link>
-          <router-link
-            to="/visitors"
-            class="sidebar-link"
-            :class="{ active: route.path.startsWith('/visitors') }"
-            @click="closeSidebar"
-          >
-            Visitors
-          </router-link>
-          <router-link
-            to="/config"
-            class="sidebar-link"
-            :class="{ active: route.path === '/config' }"
-            @click="closeSidebar"
-          >
-            Config
-          </router-link>
-        </nav>
-      </aside>
+                  <aside class="sidebar" :class="{ 'mobile-open': isMobile && sidebarOpen }">
+                    <nav class="sidebar-nav">
+                      <router-link
+                        to="/proxies"
+                        class="sidebar-link"
+                        :class="{ active: route.path.startsWith('/proxies') }"
+                        @click="closeSidebar"
+                      >
+                        代理
+                      </router-link>
+                      <router-link
+                        to="/visitors"
+                        class="sidebar-link"
+                        :class="{ active: route.path.startsWith('/visitors') }"
+                        @click="closeSidebar"
+                      >
+                        访客
+                      </router-link>
+                      <router-link
+                        to="/config"
+                        class="sidebar-link"
+                        :class="{ active: route.path === '/config' }"
+                        @click="closeSidebar"
+                      >
+                        配置
+                      </router-link>
+                    </nav>
+                  </aside>
 
-      <main id="content">
-        <router-view></router-view>
-      </main>
-    </div>
-  </div>
+                  <main id="content">
+                    <router-view />
+                  </main>
+                </div>
+              </template>
+
+              <router-view v-else />
+            </div>
+          </n-message-provider>
+        </n-notification-provider>
+      </n-dialog-provider>
+    </n-loading-bar-provider>
+  </n-config-provider>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { defineComponent, h, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useDark } from '@vueuse/core'
-import { Moon, Sunny } from '@element-plus/icons-vue'
-import GitHubIcon from './assets/icons/github.svg?component'
+import { MenuOutline, Moon, Sunny } from '@vicons/ionicons5'
+import {
+  NConfigProvider,
+  NDialogProvider,
+  NIcon,
+  NLoadingBarProvider,
+  NMessageProvider,
+  NNotificationProvider,
+  NSwitch,
+  useDialog,
+  useLoadingBar,
+  useMessage,
+  useNotification,
+} from 'naive-ui'
 import LogoIcon from './assets/icons/logo.svg?component'
 import { useResponsive } from './composables/useResponsive'
+import {
+  dateLocale,
+  locale,
+  setNaiveDialogApi,
+  setNaiveLoadingBarApi,
+  setNaiveMessageApi,
+  setNaiveNotificationApi,
+  themeOverrides,
+  useNaiveTheme,
+} from './naive'
 
 const route = useRoute()
 const isDark = useDark()
+const theme = useNaiveTheme(isDark)
 const { isMobile } = useResponsive()
-
 const sidebarOpen = ref(false)
 
 const toggleSidebar = () => {
@@ -101,66 +142,69 @@ const closeSidebar = () => {
   sidebarOpen.value = false
 }
 
-// Auto-close sidebar on route change
-watch(() => route.path, () => {
-  if (isMobile.value) {
-    closeSidebar()
-  }
+watch(
+  () => route.path,
+  () => {
+    if (isMobile.value) {
+      closeSidebar()
+    }
+  },
+)
+
+const NaiveBridge = defineComponent({
+  name: 'NaiveBridge',
+  setup() {
+    const message = useMessage()
+    const dialog = useDialog()
+    const notification = useNotification()
+    const loadingBar = useLoadingBar()
+    setNaiveMessageApi(message)
+    setNaiveDialogApi(dialog)
+    setNaiveNotificationApi(notification)
+    setNaiveLoadingBarApi(loadingBar)
+    return () => h('div')
+  },
 })
 </script>
 
-<style lang="scss">
-body {
-  margin: 0;
-  font-family: ui-sans-serif, -apple-system, system-ui, Segoe UI, Helvetica,
-    Arial, sans-serif;
-}
-
-*,
-:after,
-:before {
-  box-sizing: border-box;
-  -webkit-tap-highlight-color: transparent;
-}
-
-html, body {
-  height: 100%;
+<style scoped>
+#app-shell {
+  height: 100vh;
+  height: 100dvh;
   overflow: hidden;
 }
 
-#app {
-  height: 100vh;
-  height: 100dvh;
-  display: flex;
-  flex-direction: column;
-  background-color: $color-bg-secondary;
-}
-
-// Header
 .header {
-  flex-shrink: 0;
-  background: $color-bg-primary;
-  border-bottom: 1px solid $color-border-light;
-  height: $header-height;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  backdrop-filter: blur(16px);
+  background: color-mix(in srgb, var(--app-panel) 88%, transparent);
+  border-bottom: 1px solid var(--app-border);
 }
 
 .header-content {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 100%;
-  padding: 0 $spacing-xl;
+  gap: 16px;
+  height: 72px;
+  padding: 0 24px;
 }
 
 .brand-section {
   display: flex;
   align-items: center;
-  gap: $spacing-md;
+  gap: 14px;
 }
 
 .logo-wrapper {
-  display: flex;
-  align-items: center;
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: var(--app-accent-soft);
 }
 
 .logo-icon {
@@ -168,46 +212,91 @@ html, body {
   height: 28px;
 }
 
-.divider {
-  color: $color-border;
-  font-size: 22px;
-  font-weight: 200;
+.brand-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .brand-name {
-  font-weight: $font-weight-semibold;
-  font-size: $font-size-xl;
-  color: $color-text-primary;
-  letter-spacing: -0.5px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--app-text);
 }
 
-.badge {
-  font-size: $font-size-xs;
-  font-weight: $font-weight-medium;
-  color: $color-text-muted;
-  background: $color-bg-muted;
-  padding: 2px 8px;
-  border-radius: 4px;
+.brand-subtitle {
+  font-size: 13px;
+  color: var(--app-text-muted);
 }
 
 .header-controls {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
 }
 
-.github-link {
-  @include flex-center;
-  width: 28px;
-  height: 28px;
-  border-radius: $radius-sm;
-  color: $color-text-secondary;
-  transition: all $transition-fast;
+.icon-button {
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  background: var(--app-panel-strong);
+  color: var(--app-text);
+  cursor: pointer;
+  box-shadow: var(--app-shadow);
+}
 
-  &:hover {
-    background: $color-bg-hover;
-    color: $color-text-primary;
-  }
+.layout {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  height: calc(100vh - 72px);
+  height: calc(100dvh - 72px);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.sidebar {
+  height: 100%;
+  overflow: auto;
+  padding: 20px 14px;
+  border-right: 1px solid var(--app-border);
+  background: color-mix(in srgb, var(--app-panel) 92%, transparent);
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sidebar-link {
+  padding: 12px 14px;
+  border-radius: 14px;
+  color: var(--app-text-muted);
+  text-decoration: none;
+  font-weight: 600;
+  transition: 0.2s ease;
+}
+
+.sidebar-link:hover,
+.sidebar-link.active {
+  color: var(--app-text);
+  background: var(--app-accent-soft);
+}
+
+#content {
+  height: 100%;
+  min-height: 0;
+  overflow: auto;
+  padding: 24px;
+}
+
+#content > * {
+  max-width: 1180px;
+  margin: 0 auto;
 }
 
 .github-icon {
@@ -215,314 +304,42 @@ html, body {
   height: 18px;
 }
 
-.theme-switch {
-  --el-switch-on-color: #2c2c3a;
-  --el-switch-off-color: #f2f2f2;
-  --el-switch-border-color: var(--color-border-light);
-}
-
-html.dark .theme-switch {
-  --el-switch-off-color: #333;
-}
-
-.theme-switch .el-switch__core .el-switch__inner .el-icon {
-  color: #909399 !important;
-}
-
-// Layout
-.layout {
-  flex: 1;
-  display: flex;
-  overflow: hidden;
-}
-
-.sidebar {
-  width: $sidebar-width;
-  flex-shrink: 0;
-  border-right: 1px solid $color-border-light;
-  padding: $spacing-lg $spacing-md;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-}
-
-.sidebar-nav {
-  @include flex-column;
-  gap: 2px;
-}
-
-.sidebar-link {
-  display: block;
-  text-decoration: none;
-  font-size: $font-size-lg;
-  color: $color-text-secondary;
-  padding: 10px $spacing-md;
-  border-radius: $radius-sm;
-  transition: all $transition-fast;
-
-  &:hover {
-    color: $color-text-primary;
-    background: $color-bg-hover;
-  }
-
-  &.active {
-    color: $color-text-primary;
-    background: $color-bg-hover;
-    font-weight: $font-weight-medium;
-  }
-}
-
-// Hamburger button (mobile only)
-.hamburger-btn {
-  @include flex-center;
-  width: 36px;
-  height: 36px;
-  border: none;
-  border-radius: $radius-sm;
-  background: transparent;
-  cursor: pointer;
-  padding: 0;
-  transition: background $transition-fast;
-
-  &:hover {
-    background: $color-bg-hover;
-  }
-}
-
-.hamburger-icon {
-  font-size: 20px;
-  line-height: 1;
-  color: $color-text-primary;
-}
-
-// Mobile overlay
 .sidebar-overlay {
   position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 99;
+  inset: 72px 0 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 40;
 }
 
-#content {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  background: $color-bg-primary;
-}
-
-// Common page styles
-.page-title {
-  font-size: $font-size-xl + 2px;
-  font-weight: $font-weight-semibold;
-  color: $color-text-primary;
-  margin: 0;
-}
-
-.page-subtitle {
-  font-size: $font-size-md;
-  color: $color-text-muted;
-  margin: $spacing-sm 0 0;
-}
-
-.icon-btn {
-  @include flex-center;
-  width: 32px;
-  height: 32px;
-  border: none;
-  border-radius: $radius-sm;
-  background: transparent;
-  color: $color-text-muted;
-  cursor: pointer;
-  transition: all $transition-fast;
-
-  &:hover {
-    background: $color-bg-hover;
-    color: $color-text-primary;
-  }
-}
-
-.search-input {
-  width: 200px;
-
-  .el-input__wrapper {
-    border-radius: 10px;
-    background: $color-bg-tertiary;
-    box-shadow: 0 0 0 1px $color-border inset;
-
-    &.is-focus {
-      box-shadow: 0 0 0 1px $color-text-light inset;
-    }
-  }
-
-  .el-input__inner {
-    color: $color-text-primary;
-  }
-
-  .el-input__prefix {
-    color: $color-text-muted;
-  }
-
-  @include mobile {
-    flex: 1;
-    width: auto;
-  }
-}
-
-// Element Plus global overrides
-.el-button {
-  font-weight: $font-weight-medium;
-}
-
-.el-tag {
-  font-weight: $font-weight-medium;
-}
-
-.el-switch {
-  --el-switch-on-color: #606266;
-  --el-switch-off-color: #dcdfe6;
-}
-
-html.dark .el-switch {
-  --el-switch-on-color: #b0b0b0;
-  --el-switch-off-color: #404040;
-}
-
-.el-radio {
-  --el-radio-text-color: var(--color-text-primary) !important;
-  --el-radio-input-border-color-hover: #606266 !important;
-  --el-color-primary: #606266 !important;
-}
-
-.el-form-item {
-  margin-bottom: 16px;
-}
-
-.el-loading-mask {
-  border-radius: $radius-md;
-}
-
-// Select overrides
-.el-select__wrapper {
-  border-radius: $radius-md !important;
-  box-shadow: 0 0 0 1px $color-border-light inset !important;
-  transition: all $transition-fast;
-
-  &:hover {
-    box-shadow: 0 0 0 1px $color-border inset !important;
-  }
-
-  &.is-focused {
-    box-shadow: 0 0 0 1px $color-border inset !important;
-  }
-}
-
-.el-select-dropdown {
-  border-radius: 12px !important;
-  border: 1px solid $color-border-light !important;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1),
-              0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
-  padding: 4px !important;
-}
-
-.el-select-dropdown__item {
-  border-radius: $radius-sm;
-  margin: 2px 0;
-  transition: background $transition-fast;
-
-  &.is-selected {
-    color: $color-text-primary;
-    font-weight: $font-weight-medium;
-  }
-}
-
-// Input overrides
-.el-input__wrapper {
-  border-radius: $radius-md !important;
-  box-shadow: 0 0 0 1px $color-border-light inset !important;
-  transition: all $transition-fast;
-
-  &:hover {
-    box-shadow: 0 0 0 1px $color-border inset !important;
-  }
-
-  &.is-focus {
-    box-shadow: 0 0 0 1px $color-border inset !important;
-  }
-}
-
-// Status pill (shared)
-.status-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: $font-size-sm;
-  font-weight: $font-weight-medium;
-  padding: 3px 10px;
-  border-radius: 10px;
-  text-transform: capitalize;
-
-  &.running {
-    background: rgba(103, 194, 58, 0.1);
-    color: #67c23a;
-  }
-
-  &.error {
-    background: rgba(245, 108, 108, 0.1);
-    color: #f56c6c;
-  }
-
-  &.waiting {
-    background: rgba(230, 162, 60, 0.1);
-    color: #e6a23c;
-  }
-
-  &.disabled {
-    background: $color-bg-muted;
-    color: $color-text-light;
-  }
-
-  .status-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: currentColor;
-  }
-}
-
-// Mobile
-@include mobile {
+@media (max-width: 767px) {
   .header-content {
-    padding: 0 $spacing-lg;
+    height: 64px;
+    padding: 0 16px;
+  }
+
+  .layout {
+    grid-template-columns: 1fr;
+    height: calc(100vh - 64px);
+    height: calc(100dvh - 64px);
   }
 
   .sidebar {
     position: fixed;
-    top: $header-height;
+    top: 64px;
     left: 0;
     bottom: 0;
-    z-index: 100;
-    background: $color-bg-primary;
+    width: 220px;
+    z-index: 50;
     transform: translateX(-100%);
-    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    border-right: 1px solid $color-border-light;
-
-    &.mobile-open {
-      transform: translateX(0);
-    }
+    transition: transform 0.2s ease;
   }
 
-  .sidebar-nav {
-    flex-direction: column;
-    gap: 2px;
+  .sidebar.mobile-open {
+    transform: translateX(0);
   }
 
   #content {
-    width: 100%;
-  }
-
-  // Select dropdown overflow prevention
-  .el-select-dropdown {
-    max-width: calc(100vw - 32px);
+    padding: 16px;
   }
 }
 </style>

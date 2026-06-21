@@ -1,26 +1,47 @@
 <template>
-  <ConfigSection title="Authentication" :readonly="readonly">
+  <n-card title="认证" size="small">
     <template v-if="['http', 'tcpmux'].includes(form.type)">
-      <div class="field-row three-col">
-        <ConfigField label="HTTP User" type="text" v-model="form.httpUser" :readonly="readonly" />
-        <ConfigField label="HTTP Password" type="password" v-model="form.httpPassword" :readonly="readonly" />
-        <ConfigField label="Route By HTTP User" type="text" v-model="form.routeByHTTPUser" :readonly="readonly" />
-      </div>
+      <n-grid responsive="screen" cols="1 s:2 m:3" :x-gap="16" :y-gap="8">
+        <n-form-item-gi label="HTTP 用户名">
+          <n-input v-model:value="form.httpUser" :disabled="readonly" />
+        </n-form-item-gi>
+        <n-form-item-gi label="HTTP 密码">
+          <n-input v-model:value="form.httpPassword" :disabled="readonly" type="password" show-password-on="click" />
+        </n-form-item-gi>
+        <n-form-item-gi label="按 HTTP 用户路由">
+          <n-input v-model:value="form.routeByHTTPUser" :disabled="readonly" />
+        </n-form-item-gi>
+      </n-grid>
     </template>
     <template v-if="['stcp', 'sudp', 'xtcp'].includes(form.type)">
-      <div class="field-row two-col">
-        <ConfigField label="Secret Key" type="password" v-model="form.secretKey" prop="secretKey" :readonly="readonly" />
-        <ConfigField label="Allow Users" type="tags" v-model="form.allowUsers" placeholder="username" :readonly="readonly" />
-      </div>
+      <n-grid responsive="screen" cols="1 m:2" :x-gap="16" :y-gap="8">
+        <n-form-item-gi label="密钥" path="secretKey">
+          <n-input v-model:value="form.secretKey" :disabled="readonly" type="password" show-password-on="click" />
+        </n-form-item-gi>
+        <n-form-item-gi label="允许访问用户">
+          <n-empty
+            v-if="readonly && form.allowUsers.length === 0"
+            size="small"
+            description="未配置"
+          />
+          <n-dynamic-tags
+            v-else
+            :value="form.allowUsers"
+            :disabled="readonly"
+            :closable="!readonly"
+            :input-props="{ placeholder: 'username' }"
+            @update:value="form.allowUsers = $event as string[]"
+          />
+        </n-form-item-gi>
+      </n-grid>
     </template>
-  </ConfigSection>
+  </n-card>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { NCard, NDynamicTags, NEmpty, NFormItemGi, NGrid, NInput } from 'naive-ui'
 import type { ProxyFormData } from '../../types'
-import ConfigSection from '../ConfigSection.vue'
-import ConfigField from '../ConfigField.vue'
 
 const props = withDefaults(defineProps<{
   modelValue: ProxyFormData
@@ -29,12 +50,11 @@ const props = withDefaults(defineProps<{
 
 const emit = defineEmits<{ 'update:modelValue': [value: ProxyFormData] }>()
 
+// 将父级 v-model 暴露为当前分段可直接读写的表单对象。
 const form = computed({
   get: () => props.modelValue,
   set: (val) => emit('update:modelValue', val),
 })
 </script>
 
-<style scoped lang="scss">
-@use '@/assets/css/form-layout';
-</style>
+<style scoped lang="scss"></style>

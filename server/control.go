@@ -521,5 +521,6 @@ func (ctl *Control) CloseProxy(closeMsg *msg.CloseProxy) (err error) {
 	ctl.mu.Unlock()
 
 	ctl.closeProxy(pxy)
+	metrics.Server.RemoveProxy(pxy.GetName(), pxy.GetConfigurer().GetBaseConfig().Type)
 	return
 }

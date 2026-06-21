@@ -1,108 +1,140 @@
 <template>
-  <div id="app">
-    <header class="header">
-      <div class="header-content">
-        <div class="brand-section">
-          <button
-            v-if="isMobile"
-            class="hamburger-btn"
-            @click="toggleSidebar"
-            aria-label="Toggle menu"
-          >
-            <span class="hamburger-icon">&#9776;</span>
-          </button>
-          <div class="logo-wrapper">
-            <LogoIcon class="logo-icon" />
-          </div>
-          <span class="divider">/</span>
-          <span class="brand-name">frp</span>
-          <span class="badge server-badge">Server</span>
-        </div>
+  <n-config-provider
+    :locale="locale"
+    :date-locale="dateLocale"
+    :theme="theme"
+    :theme-overrides="themeOverrides"
+  >
+    <n-loading-bar-provider>
+      <n-dialog-provider>
+        <n-notification-provider>
+          <n-message-provider>
+            <naive-bridge />
+            <div id="app-shell">
+              <template v-if="route.name !== 'Login'">
+                <header class="header">
+                  <div class="header-content">
+                    <div class="brand-section">
+                      <button
+                        v-if="isMobile"
+                        class="icon-button"
+                        type="button"
+                        @click="toggleSidebar"
+                        aria-label="切换导航"
+                      >
+                        <n-icon :size="20"><MenuOutline /></n-icon>
+                      </button>
+                      <div class="logo-wrapper">
+                        <LogoIcon class="logo-icon" />
+                      </div>
+                      <div class="brand-copy">
+                        <span class="brand-name">frps 控制台</span>
+                        <span class="brand-subtitle">服务端监控与配置中心</span>
+                      </div>
+                    </div>
 
-        <div class="header-controls">
-          <a
-            class="github-link"
-            href="https://github.com/fatedier/frp"
-            target="_blank"
-            aria-label="GitHub"
-          >
-            <GitHubIcon class="github-icon" />
-          </a>
-          <el-switch
-            v-model="isDark"
-            inline-prompt
-            :active-icon="Moon"
-            :inactive-icon="Sunny"
-            class="theme-switch"
-          />
-        </div>
-      </div>
-    </header>
+                    <div class="header-controls">
+                      <n-switch v-model:value="isDark">
+                        <template #checked-icon>
+                          <n-icon><Moon /></n-icon>
+                        </template>
+                        <template #unchecked-icon>
+                          <n-icon><Sunny /></n-icon>
+                        </template>
+                      </n-switch>
+                    </div>
+                  </div>
+                </header>
 
-    <div class="layout">
-      <!-- Mobile overlay -->
-      <div
-        v-if="isMobile && sidebarOpen"
-        class="sidebar-overlay"
-        @click="closeSidebar"
-      />
+                <div class="layout">
+                  <div
+                    v-if="isMobile && sidebarOpen"
+                    class="sidebar-overlay"
+                    @click="closeSidebar"
+                  />
 
-      <aside
-        class="sidebar"
-        :class="{ 'mobile-open': isMobile && sidebarOpen }"
-      >
-        <nav class="sidebar-nav">
-          <router-link
-            to="/"
-            class="sidebar-link"
-            :class="{ active: route.path === '/' }"
-            @click="closeSidebar"
-          >
-            Overview
-          </router-link>
-          <router-link
-            to="/clients"
-            class="sidebar-link"
-            :class="{ active: route.path.startsWith('/clients') }"
-            @click="closeSidebar"
-          >
-            Clients
-          </router-link>
-          <router-link
-            to="/proxies"
-            class="sidebar-link"
-            :class="{
-              active:
-                route.path.startsWith('/proxies') ||
-                route.path.startsWith('/proxy'),
-            }"
-            @click="closeSidebar"
-          >
-            Proxies
-          </router-link>
-        </nav>
-      </aside>
+                  <aside class="sidebar" :class="{ 'mobile-open': isMobile && sidebarOpen }">
+                    <nav class="sidebar-nav">
+                      <router-link
+                        to="/"
+                        class="sidebar-link"
+                        :class="{ active: route.path === '/' }"
+                        @click="closeSidebar"
+                      >
+                        总览
+                      </router-link>
+                      <router-link
+                        to="/clients"
+                        class="sidebar-link"
+                        :class="{ active: route.path.startsWith('/clients') }"
+                        @click="closeSidebar"
+                      >
+                        客户端
+                      </router-link>
+                      <router-link
+                        to="/proxies"
+                        class="sidebar-link"
+                        :class="{ active: route.path.startsWith('/proxies') || route.path.startsWith('/proxy') }"
+                        @click="closeSidebar"
+                      >
+                        代理
+                      </router-link>
+                      <router-link
+                        to="/config"
+                        class="sidebar-link"
+                        :class="{ active: route.path.startsWith('/config') }"
+                        @click="closeSidebar"
+                      >
+                        配置
+                      </router-link>
+                    </nav>
+                  </aside>
 
-      <main id="content">
-        <router-view></router-view>
-      </main>
-    </div>
-  </div>
+                  <main id="content">
+                    <router-view />
+                  </main>
+                </div>
+              </template>
+
+              <router-view v-else />
+            </div>
+          </n-message-provider>
+        </n-notification-provider>
+      </n-dialog-provider>
+    </n-loading-bar-provider>
+  </n-config-provider>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { defineComponent, h, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useDark } from '@vueuse/core'
-import { Moon, Sunny } from '@element-plus/icons-vue'
-import GitHubIcon from './assets/icons/github.svg?component'
+import { MenuOutline, Moon, Sunny } from '@vicons/ionicons5'
+import {
+  NConfigProvider,
+  NDialogProvider,
+  NIcon,
+  NLoadingBarProvider,
+  NMessageProvider,
+  NNotificationProvider,
+  NSwitch,
+  useLoadingBar,
+  useMessage,
+} from 'naive-ui'
 import LogoIcon from './assets/icons/logo.svg?component'
 import { useResponsive } from './composables/useResponsive'
+import {
+  dateLocale,
+  locale,
+  setNaiveMessageApi,
+  themeOverrides,
+  useNaiveTheme,
+} from './naive'
 
 const route = useRoute()
 const isDark = useDark()
+const theme = useNaiveTheme(isDark)
 const { isMobile } = useResponsive()
-
 const sidebarOpen = ref(false)
 
 const toggleSidebar = () => {
@@ -113,7 +145,6 @@ const closeSidebar = () => {
   sidebarOpen.value = false
 }
 
-// Auto-close sidebar on route change
 watch(
   () => route.path,
   () => {
@@ -122,86 +153,57 @@ watch(
     }
   },
 )
+
+const NaiveBridge = defineComponent({
+  name: 'NaiveBridge',
+  setup() {
+    const message = useMessage()
+    const loadingBar = useLoadingBar()
+    setNaiveMessageApi(message)
+    void loadingBar
+    return () => h('div')
+  },
+})
 </script>
 
-<style>
-:root {
-  --header-height: 50px;
-  --sidebar-width: 200px;
-  --header-bg: #ffffff;
-  --header-border: #e4e7ed;
-  --sidebar-bg: #ffffff;
-  --text-primary: #303133;
-  --text-secondary: #606266;
-  --text-muted: #909399;
-  --hover-bg: #efefef;
-  --content-bg: #f9f9f9;
-}
-
-html.dark {
-  --header-bg: #1e1e2e;
-  --header-border: #3a3d5c;
-  --sidebar-bg: #1e1e2e;
-  --text-primary: #e5e7eb;
-  --text-secondary: #b0b0b0;
-  --text-muted: #888888;
-  --hover-bg: #2a2a3e;
-  --content-bg: #181825;
-}
-
-body {
-  margin: 0;
-  font-family:
-    ui-sans-serif, -apple-system, system-ui, Segoe UI, Helvetica, Arial,
-    sans-serif;
-}
-
-*,
-:after,
-:before {
-  box-sizing: border-box;
-  -webkit-tap-highlight-color: transparent;
-}
-
-html,
-body {
-  height: 100%;
+<style scoped>
+#app-shell {
+  height: 100vh;
+  height: 100dvh;
   overflow: hidden;
 }
 
-#app {
-  height: 100vh;
-  height: 100dvh;
-  display: flex;
-  flex-direction: column;
-  background-color: var(--content-bg);
-}
-
-/* Header */
 .header {
-  flex-shrink: 0;
-  background: var(--header-bg);
-  border-bottom: 1px solid var(--header-border);
-  height: var(--header-height);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  backdrop-filter: blur(16px);
+  background: color-mix(in srgb, var(--app-panel) 88%, transparent);
+  border-bottom: 1px solid var(--app-border);
 }
 
 .header-content {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 100%;
-  padding: 0 20px;
+  gap: 16px;
+  height: 72px;
+  padding: 0 24px;
 }
 
 .brand-section {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
 }
 
 .logo-wrapper {
-  display: flex;
-  align-items: center;
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: var(--app-accent-soft);
 }
 
 .logo-icon {
@@ -209,60 +211,91 @@ body {
   height: 28px;
 }
 
-.divider {
-  color: var(--header-border);
-  font-size: 22px;
-  font-weight: 200;
+.brand-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .brand-name {
-  font-weight: 600;
   font-size: 18px;
-  color: var(--text-primary);
-  letter-spacing: -0.5px;
+  font-weight: 700;
+  color: var(--app-text);
 }
 
-.badge {
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--text-muted);
-  background: var(--hover-bg);
-  padding: 2px 8px;
-  border-radius: 4px;
-}
-
-.badge.server-badge {
-  background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
-  color: white;
-  border: none;
-  font-weight: 500;
-}
-
-html.dark .badge.server-badge {
-  background: linear-gradient(135deg, #60a5fa 0%, #22d3ee 100%);
+.brand-subtitle {
+  font-size: 13px;
+  color: var(--app-text-muted);
 }
 
 .header-controls {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
 }
 
-.github-link {
-  display: flex;
+.icon-button {
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  color: var(--text-secondary);
-  transition: all 0.15s ease;
-  text-decoration: none;
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  background: var(--app-panel-strong);
+  color: var(--app-text);
+  cursor: pointer;
+  box-shadow: var(--app-shadow);
 }
 
-.github-link:hover {
-  background: var(--hover-bg);
-  color: var(--text-primary);
+.layout {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  height: calc(100vh - 72px);
+  height: calc(100dvh - 72px);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.sidebar {
+  height: 100%;
+  overflow: auto;
+  padding: 20px 14px;
+  border-right: 1px solid var(--app-border);
+  background: color-mix(in srgb, var(--app-panel) 92%, transparent);
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sidebar-link {
+  padding: 12px 14px;
+  border-radius: 14px;
+  color: var(--app-text-muted);
+  text-decoration: none;
+  font-weight: 600;
+  transition: 0.2s ease;
+}
+
+.sidebar-link:hover,
+.sidebar-link.active {
+  color: var(--app-text);
+  background: var(--app-accent-soft);
+}
+
+#content {
+  height: 100%;
+  min-height: 0;
+  overflow: auto;
+  padding: 24px;
+}
+
+#content > * {
+  max-width: 1180px;
+  margin: 0 auto;
 }
 
 .github-icon {
@@ -270,241 +303,34 @@ html.dark .badge.server-badge {
   height: 18px;
 }
 
-.theme-switch {
-  --el-switch-on-color: #2c2c3a;
-  --el-switch-off-color: #f2f2f2;
-  --el-switch-border-color: var(--header-border);
-}
-
-html.dark .theme-switch {
-  --el-switch-off-color: #333;
-}
-
-.theme-switch .el-switch__core .el-switch__inner .el-icon {
-  color: #909399 !important;
-}
-
-/* Layout */
-.layout {
-  flex: 1;
-  display: flex;
-  overflow: hidden;
-}
-
-/* Sidebar */
-.sidebar {
-  width: var(--sidebar-width);
-  flex-shrink: 0;
-  background: var(--sidebar-bg);
-  border-right: 1px solid var(--header-border);
-  padding: 16px 12px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-}
-
-.sidebar-nav {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.sidebar-link {
-  display: block;
-  text-decoration: none;
-  font-size: 15px;
-  color: var(--text-secondary);
-  padding: 10px 12px;
-  border-radius: 6px;
-  transition: all 0.15s ease;
-}
-
-.sidebar-link:hover {
-  color: var(--text-primary);
-  background: var(--hover-bg);
-}
-
-.sidebar-link.active {
-  color: var(--text-primary);
-  background: var(--hover-bg);
-  font-weight: 500;
-}
-
-/* Hamburger button (mobile only) */
-.hamburger-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border: none;
-  border-radius: 6px;
-  background: transparent;
-  cursor: pointer;
-  padding: 0;
-  transition: background 0.15s ease;
-}
-
-.hamburger-btn:hover {
-  background: var(--hover-bg);
-}
-
-.hamburger-icon {
-  font-size: 20px;
-  line-height: 1;
-  color: var(--text-primary);
-}
-
-/* Mobile overlay */
 .sidebar-overlay {
   position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 99;
+  inset: 72px 0 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 40;
 }
 
-/* Content */
-#content {
-  flex: 1;
-  min-width: 0;
-  overflow-y: auto;
-  padding: 40px;
-}
-
-#content > * {
-  max-width: 1024px;
-  margin: 0 auto;
-}
-
-/* Common page styles */
-.page-title {
-  font-size: 20px;
-  font-weight: 600;
-  color: var(--color-text-primary, var(--text-primary));
-  margin: 0;
-}
-
-.page-subtitle {
-  font-size: 14px;
-  color: var(--color-text-muted, var(--text-muted));
-  margin: 8px 0 0;
-}
-
-/* Element Plus global overrides */
-.el-button {
-  font-weight: 500;
-}
-
-.el-tag {
-  font-weight: 500;
-}
-
-.el-switch {
-  --el-switch-on-color: #606266;
-  --el-switch-off-color: #dcdfe6;
-}
-
-html.dark .el-switch {
-  --el-switch-on-color: #b0b0b0;
-  --el-switch-off-color: #3a3d5c;
-}
-
-.el-form-item {
-  margin-bottom: 16px;
-}
-
-.el-loading-mask {
-  border-radius: 8px;
-}
-
-/* Select overrides */
-.el-select__wrapper {
-  border-radius: 8px !important;
-  box-shadow: 0 0 0 1px var(--color-border-light, #e4e7ed) inset !important;
-  transition: all 0.15s ease;
-}
-
-.el-select__wrapper:hover {
-  box-shadow: 0 0 0 1px var(--color-border, #dcdfe6) inset !important;
-}
-
-.el-select__wrapper.is-focused {
-  box-shadow: 0 0 0 1px var(--color-border, #dcdfe6) inset !important;
-}
-
-.el-select-dropdown {
-  border-radius: 12px !important;
-  border: 1px solid var(--color-border-light, #e4e7ed) !important;
-  box-shadow:
-    0 10px 25px -5px rgba(0, 0, 0, 0.1),
-    0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
-  padding: 4px !important;
-}
-
-.el-select-dropdown__item {
-  border-radius: 6px;
-  margin: 2px 0;
-  transition: background 0.15s ease;
-}
-
-.el-select-dropdown__item.is-selected {
-  color: var(--color-text-primary, var(--text-primary));
-  font-weight: 500;
-}
-
-/* Input overrides */
-.el-input__wrapper {
-  border-radius: 8px !important;
-  box-shadow: 0 0 0 1px var(--color-border-light, #e4e7ed) inset !important;
-  transition: all 0.15s ease;
-}
-
-.el-input__wrapper:hover {
-  box-shadow: 0 0 0 1px var(--color-border, #dcdfe6) inset !important;
-}
-
-.el-input__wrapper.is-focus {
-  box-shadow: 0 0 0 1px var(--color-border, #dcdfe6) inset !important;
-}
-
-/* Card overrides */
-.el-card {
-  border-radius: 12px;
-  border: 1px solid var(--color-border-light, #e4e7ed);
-  transition: all 0.2s ease;
-}
-
-/* Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #d1d1d1;
-  border-radius: 3px;
-}
-
-/* Mobile */
 @media (max-width: 767px) {
   .header-content {
+    height: 64px;
     padding: 0 16px;
+  }
+
+  .layout {
+    grid-template-columns: 1fr;
+    height: calc(100vh - 64px);
+    height: calc(100dvh - 64px);
   }
 
   .sidebar {
     position: fixed;
-    top: var(--header-height);
+    top: 64px;
     left: 0;
     bottom: 0;
-    z-index: 100;
-    background: var(--sidebar-bg);
+    width: 220px;
+    z-index: 50;
     transform: translateX(-100%);
-    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    border-right: 1px solid var(--header-border);
+    transition: transform 0.2s ease;
   }
 
   .sidebar.mobile-open {
@@ -512,8 +338,7 @@ html.dark .el-switch {
   }
 
   #content {
-    width: 100%;
-    padding: 20px;
+    padding: 16px;
   }
 }
 </style>

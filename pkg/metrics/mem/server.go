@@ -155,6 +155,18 @@ func (m *serverMetrics) CloseProxy(name string, proxyType string) {
 	}
 }
 
+func (m *serverMetrics) RemoveProxy(name string, proxyType string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if proxyStats, ok := m.info.ProxyStatistics[name]; ok {
+		delete(m.info.ProxyStatistics, name)
+		if counter, exists := m.info.ProxyTypeCounts[proxyType]; exists && proxyStats.LastStartTime.After(proxyStats.LastCloseTime) {
+			counter.Dec(1)
+		}
+	}
+}
+
 func (m *serverMetrics) OpenConnection(name string, _ string) {
 	m.info.CurConns.Inc(1)
 

@@ -1,0 +1,63 @@
+$spacing-xs: 4px;
+$spacing-sm: 8px;
+$spacing-md: 12px;
+$spacing-lg: 16px;
+$spacing-xl: 24px;
+
+$radius-sm: 8px;
+$radius-md: 12px;
+$radius-lg: 16px;
+
+$font-size-xs: 12px;
+$font-size-sm: 13px;
+$font-size-md: 14px;
+$font-size-lg: 16px;
+$font-size-xl: 20px;
+
+$font-weight-medium: 500;
+$font-weight-semibold: 600;
+
+$transition-fast: 0.2s ease;
+$transition-medium: 0.3s ease;
+
+$header-height: 72px;
+$sidebar-width: 220px;
+
+$color-bg-primary: var(--app-panel-strong);
+$color-bg-secondary: var(--app-bg);
+$color-bg-tertiary: var(--app-panel);
+$color-bg-hover: var(--app-accent-soft);
+$color-bg-muted: rgba(127, 145, 137, 0.12);
+
+$color-border: var(--app-border);
+$color-border-light: var(--app-border);
+$color-border-lighter: var(--app-border);
+
+$color-text-primary: var(--app-text);
+$color-text-secondary: var(--app-text-muted);
+$color-text-muted: var(--app-text-muted);
+$color-text-light: var(--app-text-faint);
+
+$color-btn-primary: var(--app-accent);
+$color-btn-primary-hover: var(--app-accent);
+$color-danger: #dc2626;
+$color-danger-dark: #b91c1c;
+$color-danger-light: rgba(220, 38, 38, 0.12);
+$color-primary: var(--app-accent);
+
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+@mixin mobile {
+  @media (max-width: 767px) {
+    @content;
+  }
+}

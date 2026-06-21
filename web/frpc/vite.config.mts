@@ -3,31 +3,17 @@ import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import svgLoader from 'vite-svg-loader'
-import AutoImport from 'unplugin-auto-import/vite'
-import Components from 'unplugin-vue-components/vite'
-import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
-import ElementPlus from 'unplugin-element-plus/vite'
 
 // https://vitejs.dev/config/
 export default defineConfig({
   base: '',
-  plugins: [
-    vue(),
-    svgLoader(),
-    ElementPlus({}),
-    AutoImport({
-      resolvers: [ElementPlusResolver()],
-    }),
-    Components({
-      resolvers: [ElementPlusResolver()],
-    }),
-  ],
+  plugins: [vue(), svgLoader()],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
-      '@shared': fileURLToPath(new URL('../shared', import.meta.url)),
+      '@common': fileURLToPath(new URL('../common', import.meta.url)),
     },
-    dedupe: ['vue', 'element-plus', '@element-plus/icons-vue'],
+    dedupe: ['vue', 'naive-ui'],
     modules: [
       fileURLToPath(new URL('../node_modules', import.meta.url)),
       'node_modules',
@@ -37,7 +23,7 @@ export default defineConfig({
     preprocessorOptions: {
       scss: {
         api: 'modern',
-        additionalData: `@use "@shared/css/_index.scss" as *;`,
+        additionalData: `@use "@common/layout.scss" as *;`,
       },
     },
   },

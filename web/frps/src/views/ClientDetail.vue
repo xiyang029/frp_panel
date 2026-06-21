@@ -1,16 +1,12 @@
 <template>
   <div class="client-detail-page">
     <!-- Breadcrumb -->
-    <nav class="breadcrumb">
-      <a class="breadcrumb-link" @click="goBack">
-        <el-icon><ArrowLeft /></el-icon>
-      </a>
-      <router-link to="/clients" class="breadcrumb-item">Clients</router-link>
-      <span class="breadcrumb-separator">/</span>
-      <span class="breadcrumb-current">{{
-        client?.displayName || route.params.key
-      }}</span>
-    </nav>
+    <n-breadcrumb separator=">">
+      <n-breadcrumb-item>
+        <router-link to="/clients" class="breadcrumb-link">客户端列表</router-link>
+      </n-breadcrumb-item>
+      <n-breadcrumb-item>{{ client?.displayName || route.params.key }}</n-breadcrumb-item>
+    </n-breadcrumb>
 
     <div v-loading="loading" class="detail-content">
       <template v-if="client">
@@ -24,12 +20,12 @@
               <div class="client-info">
                 <div class="client-name-row">
                   <h1 class="client-name">{{ client.displayName }}</h1>
-                  <el-tag v-if="client.version" size="small" type="success"
-                    >v{{ client.version }}</el-tag
-                  >
-                  <el-tag v-if="client.wireProtocolLabel" size="small" type="info">
+                  <n-tag v-if="client.version" size="small" type="success" round>
+                    v{{ client.version }}
+                  </n-tag>
+                  <n-tag v-if="client.wireProtocolLabel" size="small" type="info" round>
                     {{ client.wireProtocolLabel }}
-                  </el-tag>
+                  </n-tag>
                 </div>
                 <div class="client-meta">
                   <span v-if="client.ip" class="meta-item">{{
@@ -46,7 +42,7 @@
                 class="status-badge"
                 :class="client.online ? 'online' : 'offline'"
               >
-                {{ client.online ? 'Online' : 'Offline' }}
+                {{ client.online ? '在线' : '离线' }}
               </span>
             </div>
           </div>
@@ -54,7 +50,7 @@
           <!-- Info Section -->
           <div class="info-section">
             <div class="info-item">
-              <span class="info-label">Connections</span>
+              <span class="info-label">连接数</span>
               <span class="info-value">{{ totalConnections }}</span>
             </div>
             <div class="info-item">
@@ -62,16 +58,16 @@
               <span class="info-value">{{ client.runID }}</span>
             </div>
             <div v-if="client.wireProtocol" class="info-item">
-              <span class="info-label">Protocol</span>
+              <span class="info-label">协议</span>
               <span class="info-value">{{ client.wireProtocol }}</span>
             </div>
             <div class="info-item">
-              <span class="info-label">First Connected</span>
+              <span class="info-label">首次连接</span>
               <span class="info-value">{{ client.firstConnectedAgo }}</span>
             </div>
             <div class="info-item">
               <span class="info-label">{{
-                client.online ? 'Connected' : 'Disconnected'
+                client.online ? '最近连接' : '最近断开'
               }}</span>
               <span class="info-value">{{
                 client.online ? client.lastConnectedAgo : client.disconnectedAgo
@@ -84,21 +80,24 @@
         <div class="proxies-card">
           <div class="proxies-header">
             <div class="proxies-title">
-              <h2>Proxies</h2>
+              <h2>代理列表</h2>
               <span class="proxies-count">{{ filteredProxies.length }}</span>
             </div>
-            <el-input
-              v-model="proxySearch"
-              placeholder="Search proxies..."
-              :prefix-icon="Search"
+            <n-input
+              v-model:value="proxySearch"
+              placeholder="搜索代理名称或类型"
               clearable
               class="proxy-search"
-            />
+            >
+              <template #prefix>
+                <n-icon><search-outline /></n-icon>
+              </template>
+            </n-input>
           </div>
           <div class="proxies-body">
             <div v-if="proxiesLoading" class="loading-state">
-              <el-icon class="is-loading"><Loading /></el-icon>
-              <span>Loading...</span>
+              <n-spin size="small" />
+              <span>加载中...</span>
             </div>
             <div v-else-if="filteredProxies.length > 0" class="proxies-list">
               <ProxyCard
@@ -109,20 +108,20 @@
               />
             </div>
             <div v-else-if="clientProxies.length > 0" class="empty-state">
-              <p>No proxies match "{{ proxySearch }}"</p>
+              <p>没有匹配“{{ proxySearch }}”的代理</p>
             </div>
             <div v-else class="empty-state">
-              <p>No proxies found</p>
+              <p>暂无代理</p>
             </div>
           </div>
         </div>
       </template>
 
       <div v-else-if="!loading" class="not-found">
-        <h2>Client not found</h2>
-        <p>The client doesn't exist or has been removed.</p>
+        <h2>未找到客户端</h2>
+        <p>该客户端不存在，或已被移除。</p>
         <router-link to="/clients">
-          <el-button type="primary">Back to Clients</el-button>
+          <n-button type="primary">返回客户端列表</n-button>
         </router-link>
       </div>
     </div>
@@ -132,8 +131,8 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
-import { ArrowLeft, Loading, Search } from '@element-plus/icons-vue'
+import { NBreadcrumb, NBreadcrumbItem, NButton, NIcon, NInput, NSpin, NTag } from 'naive-ui'
+import { ArrowBackOutline, SearchOutline } from '@vicons/ionicons5'
 import { Client } from '../utils/client'
 import { getClient } from '../api/client'
 import { getProxiesByType } from '../api/proxy'
@@ -149,9 +148,11 @@ import {
 } from '../utils/proxy'
 import { getServerInfo } from '../api/server'
 import ProxyCard from '../components/ProxyCard.vue'
+import { createMessageHelpers } from '../naive'
 
 const route = useRoute()
 const router = useRouter()
+const message = createMessageHelpers()
 const client = ref<Client | null>(null)
 const loading = ref(true)
 
@@ -212,7 +213,7 @@ const fetchClient = async () => {
     const data = await getClient(key)
     client.value = new Client(data)
   } catch (error: any) {
-    ElMessage.error('Failed to fetch client: ' + error.message)
+    message.error('获取客户端详情失败：' + error.message)
   } finally {
     loading.value = false
   }
@@ -284,52 +285,31 @@ onMounted(() => {
 .client-detail-page {
 }
 
-/* Breadcrumb */
-.breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
+.n-breadcrumb {
   margin-bottom: 24px;
 }
 
 .breadcrumb-link {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  color: var(--text-secondary);
-  cursor: pointer;
+  color: var(--app-text-muted);
   transition: color 0.2s;
-  margin-right: 4px;
+  text-decoration: none;
 }
 
 .breadcrumb-link:hover {
-  color: var(--text-primary);
+  color: var(--app-text);
 }
 
-.breadcrumb-item {
-  color: var(--text-secondary);
-  text-decoration: none;
-  transition: color 0.2s;
-}
-
-.breadcrumb-item:hover {
-  color: var(--el-color-primary);
-}
-
-.breadcrumb-separator {
-  color: var(--el-border-color);
-}
-
-.breadcrumb-current {
-  color: var(--text-primary);
-  font-weight: 500;
+.breadcrumb-link.is-button {
+  cursor: pointer;
 }
 
 /* Card Base */
 .header-card,
 .proxies-card {
-  background: var(--el-bg-color);
-  border: 1px solid var(--header-border);
+  background: var(--app-panel-strong);
+  border: 1px solid var(--app-border);
   border-radius: 12px;
   margin-bottom: 16px;
 }
@@ -473,10 +453,7 @@ html.dark .status-badge.online {
 
 .proxy-search {
   width: 200px;
-}
-
-.proxy-search :deep(.el-input__wrapper) {
-  border-radius: 6px;
+  --n-border-radius: 8px;
 }
 
 .proxies-body {

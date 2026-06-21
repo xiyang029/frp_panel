@@ -3,60 +3,43 @@
     <div class="page-header">
       <div class="header-top">
         <div class="title-section">
-          <h1 class="page-title">Proxies</h1>
-          <p class="page-subtitle">View and manage all proxy configurations</p>
+          <h1 class="page-title">代理列表</h1>
+          <p class="page-subtitle">查看并管理所有代理配置与运行状态。</p>
         </div>
 
         <div class="actions-section">
-          <ActionButton variant="outline" size="small" @click="refreshData">
-            Refresh
-          </ActionButton>
+          <n-button type="primary" secondary quaternary size="small" @click="refreshData">
+            刷新
+          </n-button>
 
-          <ActionButton variant="outline" size="small" danger @click="showClearDialog = true">
-            Clear Offline
-          </ActionButton>
+          <n-button type="error" secondary quaternary size="small" @click="showClearDialog = true">
+            清理离线代理
+          </n-button>
         </div>
       </div>
 
       <div class="filter-section">
         <div class="search-row">
-          <el-input
-            v-model="searchText"
-            placeholder="Search proxies..."
-            :prefix-icon="Search"
+          <n-input
+            v-model:value="searchText"
+            placeholder="搜索代理名称、客户端或地址"
             clearable
             class="main-search"
-          />
+          >
+            <template #prefix>
+              <n-icon><search-outline /></n-icon>
+            </template>
+          </n-input>
 
-          <PopoverMenu
-            :model-value="selectedClientKey"
-            :width="220"
-            placement="bottom-end"
-            selectable
+          <n-select
+            :value="selectedClientKey"
+            :options="clientFilterOptions"
             filterable
-            filter-placeholder="Search clients..."
-            :display-value="selectedClientLabel"
             clearable
             class="client-filter"
-            @update:model-value="onClientFilterChange($event as string)"
-          >
-            <template #default="{ filterText }">
-              <PopoverMenuItem value="">All Clients</PopoverMenuItem>
-              <PopoverMenuItem
-                v-if="clientIDFilter && !selectedClientInList"
-                :value="selectedClientKey"
-              >
-                {{ userFilter ? userFilter + '.' : '' }}{{ clientIDFilter }} (not found)
-              </PopoverMenuItem>
-              <PopoverMenuItem
-                v-for="client in filteredClientOptions(filterText)"
-                :key="client.key"
-                :value="client.key"
-              >
-                {{ client.label }}
-              </PopoverMenuItem>
-            </template>
-          </PopoverMenu>
+            placeholder="全部客户端"
+            @update:value="onClientFilterChange"
+          />
         </div>
 
         <div class="type-tabs">
@@ -73,7 +56,7 @@
       </div>
     </div>
 
-    <div v-loading="loading" class="proxies-content">
+    <n-spin :show="loading" class="proxies-content">
       <div v-if="proxies.length > 0" class="proxies-list">
         <ProxyCard
           v-for="proxy in proxies"
@@ -83,40 +66,50 @@
         />
       </div>
       <div v-else-if="!loading" class="empty-state">
-        <el-empty description="No proxies found" />
+        <n-empty description="暂无代理" />
       </div>
-    </div>
+    </n-spin>
 
     <div v-if="total > 0" class="pagination-section">
-      <ElPagination
-        :current-page="page"
+      <n-pagination
+        :page="page"
         :page-size="pageSize"
         :page-sizes="[10, 20, 50, 100]"
-        :total="total"
-        layout="total, sizes, prev, pager, next"
-        @current-change="onPageChange"
-        @size-change="onPageSizeChange"
+        :item-count="total"
+        show-size-picker
+        show-quick-jumper
+        @update:page="onPageChange"
+        @update:page-size="onPageSizeChange"
       />
     </div>
 
-    <ConfirmDialog
-      v-model="showClearDialog"
-      title="Clear Offline"
-      message="Are you sure you want to clear all offline proxies?"
-      confirm-text="Clear"
-      danger
-      @confirm="handleClearConfirm"
-    />
+    <n-modal
+      v-model:show="showClearDialog"
+      preset="card"
+      title="清理离线代理"
+      :style="{ width: '400px', maxWidth: 'calc(100vw - 24px)' }"
+      :mask-closable="false"
+    >
+      <p class="confirm-message">确认清理所有离线代理吗？</p>
+      <template #footer>
+        <div class="dialog-footer">
+          <n-button type="primary" secondary quaternary @click="showClearDialog = false">
+            取消
+          </n-button>
+          <n-button type="error" @click="handleClearConfirm">
+            清理
+          </n-button>
+        </div>
+      </template>
+    </n-modal>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ElMessage, ElPagination } from 'element-plus'
-import { Search } from '@element-plus/icons-vue'
-import ActionButton from '@shared/components/ActionButton.vue'
-import ConfirmDialog from '@shared/components/ConfirmDialog.vue'
+import { NButton, NEmpty, NIcon, NInput, NModal, NPagination, NSelect, NSpin } from 'naive-ui'
+import { SearchOutline } from '@vicons/ionicons5'
 import {
   BaseProxy,
   TCPProxy,
@@ -128,8 +121,6 @@ import {
   SUDPProxy,
 } from '../utils/proxy'
 import ProxyCard from '../components/ProxyCard.vue'
-import PopoverMenu from '@shared/components/PopoverMenu.vue'
-import PopoverMenuItem from '@shared/components/PopoverMenuItem.vue'
 import {
   getProxiesV2,
   clearOfflineProxies as apiClearOfflineProxies,
@@ -138,12 +129,14 @@ import { getServerInfo } from '../api/server'
 import { getClientsV2 } from '../api/client'
 import { Client } from '../utils/client'
 import type { ProxyStatsInfo } from '../types/proxy'
+import { createMessageHelpers } from '../naive'
 
 const route = useRoute()
 const router = useRouter()
+const message = createMessageHelpers()
 
 const proxyTypes = [
-  { label: 'All', value: 'all' },
+  { label: '全部', value: 'all' },
   { label: 'TCP', value: 'tcp' },
   { label: 'UDP', value: 'udp' },
   { label: 'HTTP', value: 'http' },
@@ -180,29 +173,14 @@ const clientOptions = computed(() => {
     .sort((a, b) => a.label.localeCompare(b.label))
 })
 
-// Compute selected client key for el-select v-model
+// Keep selected client visible even when it is not present in the current option list.
 const selectedClientKey = computed(() => {
   if (!clientIDFilter.value) return ''
   const client = clientOptions.value.find(
     (c) => c.clientID === clientIDFilter.value && c.user === userFilter.value,
   )
-  // Return a synthetic key even if not found, so the select shows the filter is active
   return client?.key || `${userFilter.value}:${clientIDFilter.value}`
 })
-
-const selectedClientLabel = computed(() => {
-  if (!clientIDFilter.value) return 'All Clients'
-  const client = clientOptions.value.find(
-    (c) => c.clientID === clientIDFilter.value && c.user === userFilter.value,
-  )
-  return client?.label || `${userFilter.value ? userFilter.value + '.' : ''}${clientIDFilter.value}`
-})
-
-const filteredClientOptions = (filterText: string) => {
-  if (!filterText) return clientOptions.value
-  const search = filterText.toLowerCase()
-  return clientOptions.value.filter((c) => c.label.toLowerCase().includes(search))
-}
 
 // Check if the filtered client exists in the client list
 const selectedClientInList = computed(() => {
@@ -212,9 +190,25 @@ const selectedClientInList = computed(() => {
   )
 })
 
-const onClientFilterChange = (key: string) => {
-  if (key) {
-    const client = clientOptions.value.find((c) => c.key === key)
+const clientFilterOptions = computed(() => {
+  const options = [{ label: '全部客户端', value: '' }]
+  if (clientIDFilter.value && !selectedClientInList.value) {
+    options.push({
+      label: `${userFilter.value ? userFilter.value + '.' : ''}${clientIDFilter.value}（未找到）`,
+      value: selectedClientKey.value,
+    })
+  }
+  options.push(...clientOptions.value.map((client) => ({
+    label: client.label,
+    value: client.key,
+  })))
+  return options
+})
+
+const onClientFilterChange = (key: string | null) => {
+  const nextKey = key || ''
+  if (nextKey) {
+    const client = clientOptions.value.find((c) => c.key === nextKey)
     if (client) {
       router.replace({
         query: { ...route.query, clientID: client.clientID, user: client.user },
@@ -248,7 +242,7 @@ const fetchClients = async () => {
   } catch (err) {
     // Client dropdown is a non-critical side load; log for diagnostics
     // but don't surface a toast (would compete with the main fetch error).
-    console.warn('Failed to fetch clients for filter:', err)
+    console.warn('加载客户端筛选列表失败：', err)
   }
 }
 
@@ -358,11 +352,7 @@ const fetchData = async (silent = false) => {
     pageSize.value = data.pageSize
   } catch (error: any) {
     if (seq !== requestSeq) return
-    ElMessage({
-      showClose: true,
-      message: 'Failed to fetch proxies: ' + error.message,
-      type: 'error',
-    })
+    message.error('获取代理列表失败：' + error.message)
   } finally {
     if (seq === requestSeq) {
       loading.value = false
@@ -406,16 +396,10 @@ const handleClearConfirm = async () => {
 const clearOfflineProxies = async () => {
   try {
     await apiClearOfflineProxies()
-    ElMessage({
-      message: 'Successfully cleared offline proxies',
-      type: 'success',
-    })
+    message.success('已清理离线代理')
     fetchData()
   } catch (err: any) {
-    ElMessage({
-      message: 'Failed to clear offline proxies: ' + err.message,
-      type: 'warning',
-    })
+    message.warning('清理离线代理失败：' + err.message)
   }
 }
 
@@ -485,14 +469,14 @@ fetchClients()
 .page-title {
   font-size: 28px;
   font-weight: 600;
-  color: var(--el-text-color-primary);
+  color: var(--app-text);
   margin: 0;
   line-height: 1.2;
 }
 
 .page-subtitle {
   font-size: 14px;
-  color: var(--el-text-color-secondary);
+  color: var(--app-text-muted);
   margin: 0;
 }
 
@@ -520,14 +504,27 @@ fetchClients()
   flex: 1;
 }
 
-.main-search :deep(.el-input__wrapper),
-.client-filter :deep(.el-input__wrapper) {
-  height: 32px;
-  border-radius: 8px;
+.main-search,
+.client-filter {
+  --n-height: 40px;
+  --n-border-radius: 10px;
 }
 
 .client-filter {
   width: 240px;
+}
+
+.confirm-message {
+  margin: 0;
+  font-size: 14px;
+  color: var(--app-text-muted);
+  line-height: 1.6;
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
 }
 
 .type-tabs {
@@ -539,10 +536,10 @@ fetchClients()
 
 .type-tab {
   padding: 6px 16px;
-  border: 1px solid var(--el-border-color-lighter);
+  border: 1px solid var(--app-border);
   border-radius: 12px;
-  background: var(--el-bg-color);
-  color: var(--el-text-color-regular);
+  background: var(--app-panel-strong);
+  color: var(--app-text-muted);
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
@@ -551,13 +548,13 @@ fetchClients()
 }
 
 .type-tab:hover {
-  background: var(--el-fill-color-light);
+  background: var(--app-panel);
 }
 
 .type-tab.active {
-  background: var(--el-fill-color-darker);
-  color: var(--el-text-color-primary);
-  border-color: var(--el-fill-color-darker);
+  background: var(--app-accent-soft);
+  color: var(--app-text);
+  border-color: var(--app-accent);
 }
 
 .proxies-content {

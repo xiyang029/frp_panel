@@ -15,6 +15,7 @@
 package server
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -40,6 +41,24 @@ func (svr *Service) registerRouteHandlers(helper *httppkg.RouterRegisterHelper) 
 
 	// apis
 	subRouter.HandleFunc("/api/serverinfo", httppkg.MakeHTTPHandlerFunc(apiController.APIServerInfo)).Methods("GET")
+	subRouter.HandleFunc("/api/config", httppkg.MakeHTTPHandlerFunc(func(ctx *httppkg.Context) (any, error) {
+		return svr.ReadConfigFile()
+	})).Methods("GET")
+	subRouter.HandleFunc("/api/config", httppkg.MakeHTTPHandlerFunc(func(ctx *httppkg.Context) (any, error) {
+		body, err := ctx.Body()
+		if err != nil {
+			return nil, httppkg.NewError(http.StatusBadRequest, fmt.Sprintf("read request body error: %v", err))
+		}
+		if err := svr.WriteConfigFile(body); err != nil {
+			return nil, httppkg.NewError(http.StatusBadRequest, err.Error())
+		}
+		if err := svr.RestartFromConfigFile(); err != nil {
+			return nil, httppkg.NewError(http.StatusInternalServerError, err.Error())
+		}
+		return map[string]any{
+			"message": "configuration persisted, frps is restarting to apply changes",
+		}, nil
+	})).Methods("PUT")
 	subRouter.HandleFunc("/api/proxy/{type}", httppkg.MakeHTTPHandlerFunc(apiController.APIProxyByType)).Methods("GET")
 	subRouter.HandleFunc("/api/proxy/{type}/{name}", httppkg.MakeHTTPHandlerFunc(apiController.APIProxyByTypeAndName)).Methods("GET")
 	subRouter.HandleFunc("/api/proxies/{name}", httppkg.MakeHTTPHandlerFunc(apiController.APIProxyByName)).Methods("GET")

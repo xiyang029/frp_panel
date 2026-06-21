@@ -2,37 +2,39 @@
   <div class="visitors-page">
     <!-- Header -->
     <div class="page-header">
-      <h2 class="page-title">Visitors</h2>
+      <h2 class="page-title">访问器列表</h2>
     </div>
 
     <!-- Tab bar -->
     <div class="tab-bar">
       <div class="tab-buttons">
-        <button class="tab-btn active">Store</button>
+        <button class="tab-btn active">本地配置</button>
       </div>
       <div class="tab-actions">
-        <ActionButton variant="outline" size="small" @click="fetchData">
-          <el-icon><Refresh /></el-icon>
-        </ActionButton>
-        <ActionButton v-if="visitorStore.storeEnabled" size="small" @click="handleCreate">
-          + New Visitor
-        </ActionButton>
+        <n-button type="primary" secondary quaternary size="small" @click="fetchData">
+          <template #icon>
+            <n-icon><refresh-outline /></n-icon>
+          </template>
+        </n-button>
+        <n-button v-if="visitorStore.storeEnabled" type="primary" size="small" @click="handleCreate">
+          + 新建访问器
+        </n-button>
       </div>
     </div>
 
-    <div v-loading="visitorStore.loading">
+    <n-spin :show="visitorStore.loading">
       <div v-if="!visitorStore.storeEnabled" class="store-disabled">
-        <p>Store is not enabled. Add the following to your frpc configuration:</p>
+        <p>本地持久化配置未启用，请在 frpc 配置中加入以下内容：</p>
         <pre class="config-hint">[store]
 path = "./frpc_store.json"</pre>
       </div>
 
       <template v-else>
         <div class="filter-bar">
-          <el-input v-model="searchText" placeholder="Search..." clearable class="search-input">
-            <template #prefix><el-icon><Search /></el-icon></template>
-          </el-input>
-          <FilterDropdown v-model="typeFilter" label="Type" :options="typeOptions" :min-width="140" :is-mobile="isMobile" />
+          <n-input v-model:value="searchText" placeholder="搜索访问器名称" clearable class="search-input">
+            <template #prefix><n-icon><search-outline /></n-icon></template>
+          </n-input>
+          <n-select v-model:value="typeFilter" :options="typeFilterOptions" class="filter-select" />
         </div>
 
         <div v-if="filteredVisitors.length > 0" class="visitor-list">
@@ -46,55 +48,65 @@ path = "./frpc_store.json"</pre>
             </div>
             <div class="card-right">
               <div @click.stop>
-                <PopoverMenu :width="120" placement="bottom-end">
-                  <template #trigger>
-                    <ActionButton variant="outline" size="small">
-                      <el-icon><MoreFilled /></el-icon>
-                    </ActionButton>
-                  </template>
-                  <PopoverMenuItem @click="handleEdit(v)">
-                    <el-icon><Edit /></el-icon>
-                    Edit
-                  </PopoverMenuItem>
-                  <PopoverMenuItem danger @click="handleDelete(v.name)">
-                    <el-icon><Delete /></el-icon>
-                    Delete
-                  </PopoverMenuItem>
-                </PopoverMenu>
+                <n-dropdown
+                  trigger="click"
+                  placement="bottom-end"
+                  :options="visitorActionOptions"
+                  @select="(key) => handleVisitorAction(key, v)"
+                >
+                  <n-button type="primary" secondary quaternary size="small">
+                    <template #icon>
+                      <n-icon><ellipsis-horizontal /></n-icon>
+                    </template>
+                  </n-button>
+                </n-dropdown>
               </div>
             </div>
           </div>
         </div>
         <div v-else class="empty-state">
-          <p class="empty-text">No visitors found</p>
-          <p class="empty-hint">Click "New Visitor" to create one.</p>
+          <p class="empty-text">暂无访问器</p>
+          <p class="empty-hint">点击“新建访问器”即可创建。</p>
         </div>
       </template>
-    </div>
+    </n-spin>
 
-    <ConfirmDialog v-model="deleteDialog.visible" title="Delete Visitor"
-      :message="deleteDialog.message" confirm-text="Delete" danger
-      :loading="deleteDialog.loading" :is-mobile="isMobile" @confirm="doDelete" />
+    <n-modal
+      v-model:show="deleteDialog.visible"
+      preset="card"
+      title="删除访问器"
+      :style="{ width: isMobile ? 'calc(100vw - 24px)' : '400px' }"
+      :mask-closable="false"
+    >
+      <p class="confirm-message">{{ deleteDialog.message }}</p>
+      <template #footer>
+        <div class="dialog-footer">
+          <n-button type="primary" secondary quaternary @click="deleteDialog.visible = false">
+            取消
+          </n-button>
+          <n-button type="error" :loading="deleteDialog.loading" @click="doDelete">
+            删除
+          </n-button>
+        </div>
+      </template>
+    </n-modal>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive, onMounted } from 'vue'
+import { ref, computed, reactive, onMounted, h } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
-import { Search, Refresh, MoreFilled, Edit, Delete } from '@element-plus/icons-vue'
-import ActionButton from '@shared/components/ActionButton.vue'
-import FilterDropdown from '@shared/components/FilterDropdown.vue'
-import PopoverMenu from '@shared/components/PopoverMenu.vue'
-import PopoverMenuItem from '@shared/components/PopoverMenuItem.vue'
-import ConfirmDialog from '@shared/components/ConfirmDialog.vue'
+import { NButton, NDropdown, NIcon, NInput, NModal, NSelect, NSpin } from 'naive-ui'
+import { CreateOutline, EllipsisHorizontal, RefreshOutline, SearchOutline, TrashOutline } from '@vicons/ionicons5'
 import { useVisitorStore } from '../stores/visitor'
 import { useResponsive } from '../composables/useResponsive'
 import type { VisitorDefinition } from '../types'
+import { createMessageHelpers } from '../naive'
 
 const { isMobile } = useResponsive()
 const router = useRouter()
 const visitorStore = useVisitorStore()
+const message = createMessageHelpers()
 
 const searchText = ref('')
 const typeFilter = ref('')
@@ -113,6 +125,24 @@ const typeOptions = computed(() => {
     { label: 'XTCP', value: 'xtcp' },
   ]
 })
+
+const typeFilterOptions = computed(() => [
+  { label: '全部类型', value: '' },
+  ...typeOptions.value,
+])
+
+const renderActionIcon = (icon: any) => () =>
+  h(NIcon, null, { default: () => h(icon) })
+
+const visitorActionOptions = [
+  { label: '编辑', key: 'edit', icon: renderActionIcon(CreateOutline) },
+  {
+    label: '删除',
+    key: 'delete',
+    icon: renderActionIcon(TrashOutline),
+    props: { class: 'danger-dropdown-option' },
+  },
+]
 
 const filteredVisitors = computed(() => {
   let list = visitorStore.storeVisitors
@@ -152,19 +182,27 @@ const goToDetail = (name: string) => {
 
 const handleDelete = (name: string) => {
   deleteDialog.name = name
-  deleteDialog.message = `Are you sure you want to delete visitor "${name}"? This action cannot be undone.`
+  deleteDialog.message = `确认删除访问器“${name}”吗？删除后无法恢复。`
   deleteDialog.visible = true
+}
+
+const handleVisitorAction = (key: string | number, visitor: VisitorDefinition) => {
+  if (key === 'edit') {
+    handleEdit(visitor)
+  } else if (key === 'delete') {
+    handleDelete(visitor.name)
+  }
 }
 
 const doDelete = async () => {
   deleteDialog.loading = true
   try {
     await visitorStore.deleteVisitor(deleteDialog.name)
-    ElMessage.success('Visitor deleted')
+    message.success('访问器已删除')
     deleteDialog.visible = false
     fetchData()
   } catch (err: any) {
-    ElMessage.error('Delete failed: ' + (err.message || 'Unknown error'))
+    message.error('删除失败：' + (err.message || '未知错误'))
   } finally {
     deleteDialog.loading = false
   }
@@ -179,7 +217,6 @@ onMounted(() => {
 .visitors-page {
   height: 100%;
   overflow-y: auto;
-  padding: $spacing-xl 40px;
   max-width: 960px;
   margin: 0 auto;
 }
@@ -240,6 +277,10 @@ onMounted(() => {
     flex: 1;
     min-width: 150px;
   }
+}
+
+.filter-select {
+  width: 140px;
 }
 
 .visitor-list {
@@ -305,7 +346,22 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
+:global(.danger-dropdown-option) {
+  color: $color-danger;
+}
 
+.confirm-message {
+  margin: 0;
+  font-size: $font-size-md;
+  color: $color-text-secondary;
+  line-height: 1.6;
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: $spacing-md;
+}
 
 .store-disabled {
   padding: 32px;
@@ -358,6 +414,10 @@ onMounted(() => {
     :deep(.search-input) {
       flex: 1 1 100%;
     }
+  }
+
+  .filter-select {
+    width: 100%;
   }
 
   .visitor-card {

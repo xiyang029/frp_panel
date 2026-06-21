@@ -2,44 +2,45 @@
   <div class="visitor-detail-page">
     <!-- Fixed Header -->
     <div class="detail-top">
-      <nav class="breadcrumb">
-        <router-link to="/visitors" class="breadcrumb-link">Visitors</router-link>
-        <span class="breadcrumb-sep">&rsaquo;</span>
-        <span class="breadcrumb-current">{{ visitorName }}</span>
-      </nav>
+      <n-breadcrumb separator=">">
+        <n-breadcrumb-item>
+          <router-link to="/visitors" class="breadcrumb-link">访问器列表</router-link>
+        </n-breadcrumb-item>
+        <n-breadcrumb-item>{{ visitorName }}</n-breadcrumb-item>
+      </n-breadcrumb>
 
       <template v-if="visitor">
         <div class="detail-header">
           <div>
             <h2 class="detail-title">{{ visitor.name }}</h2>
-            <p class="header-subtitle">Type: {{ visitor.type.toUpperCase() }}</p>
+            <p class="header-subtitle">类型：{{ visitor.type.toUpperCase() }}</p>
           </div>
           <div v-if="isStore" class="header-actions">
-            <ActionButton variant="outline" size="small" @click="handleEdit">
-              Edit
-            </ActionButton>
+            <n-button type="primary" secondary quaternary size="small" @click="handleEdit">
+              编辑
+            </n-button>
           </div>
         </div>
       </template>
     </div>
 
     <div v-if="notFound" class="not-found">
-      <p class="empty-text">Visitor not found</p>
-      <p class="empty-hint">The visitor "{{ visitorName }}" does not exist.</p>
-      <ActionButton variant="outline" @click="router.push('/visitors')">
-        Back to Visitors
-      </ActionButton>
+      <p class="empty-text">未找到访问器</p>
+      <p class="empty-hint">访问器“{{ visitorName }}”不存在。</p>
+      <n-button type="primary" secondary quaternary @click="router.push('/visitors')">
+        返回访问器列表
+      </n-button>
     </div>
 
-    <div v-else-if="visitor" v-loading="loading" class="detail-content">
+    <n-spin v-else-if="visitor" :show="loading" class="detail-content">
       <VisitorFormLayout
         v-if="formData"
         :model-value="formData"
         readonly
       />
-    </div>
+    </n-spin>
 
-    <div v-else v-loading="loading" class="loading-area"></div>
+    <n-spin v-else :show="loading" class="loading-area"></n-spin>
 
   </div>
 </template>
@@ -47,15 +48,16 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
-import ActionButton from '@shared/components/ActionButton.vue'
+import { NBreadcrumb, NBreadcrumbItem, NButton, NSpin } from 'naive-ui'
 import VisitorFormLayout from '../components/visitor-form/VisitorFormLayout.vue'
 import { getVisitorConfig, getStoreVisitor } from '../api/frpc'
 import type { VisitorDefinition, VisitorFormData } from '../types'
 import { storeVisitorToForm } from '../types'
+import { createMessageHelpers } from '../naive'
 
 const route = useRoute()
 const router = useRouter()
+const message = createMessageHelpers()
 
 const visitorName = route.params.name as string
 const visitor = ref<VisitorDefinition | null>(null)
@@ -80,7 +82,7 @@ onMounted(async () => {
       notFound.value = true
     } else {
       notFound.value = true
-      ElMessage.error('Failed to load visitor: ' + err.message)
+      message.error('加载访问器失败：' + err.message)
     }
   } finally {
     loading.value = false
@@ -118,30 +120,18 @@ const handleEdit = () => {
   padding: 0 24px 160px;
 }
 
-.breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: $spacing-sm;
-  font-size: $font-size-md;
+.n-breadcrumb {
   margin-bottom: $spacing-lg;
 }
 
 .breadcrumb-link {
   color: $color-text-secondary;
   text-decoration: none;
+  transition: color $transition-fast;
 
   &:hover {
     color: $color-text-primary;
   }
-}
-
-.breadcrumb-sep {
-  color: $color-text-light;
-}
-
-.breadcrumb-current {
-  color: $color-text-primary;
-  font-weight: $font-weight-medium;
 }
 
 .detail-header {

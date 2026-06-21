@@ -1,5 +1,7 @@
 // http.ts - Base HTTP client
 
+import { clearDashboardAuth, buildBasicAuthHeader } from '../utils/auth'
+
 class HTTPError extends Error {
   status: number
   statusText: string
@@ -27,13 +29,26 @@ export interface V2Page<T> {
 type QueryParamValue = string | number | boolean | null | undefined
 
 async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
+  const headers = new Headers(options.headers ?? {})
+  const authHeader = buildBasicAuthHeader()
+  if (authHeader && !headers.has('Authorization')) {
+    headers.set('Authorization', authHeader)
+  }
+
   const defaultOptions: RequestInit = {
     credentials: 'include',
   }
 
-  const response = await fetch(url, { ...defaultOptions, ...options })
+  const response = await fetch(url, { ...defaultOptions, ...options, headers })
 
   if (!response.ok) {
+    if (response.status === 401) {
+      clearDashboardAuth()
+      if (!window.location.hash.startsWith('#/login')) {
+        const next = encodeURIComponent(window.location.hash || '#/')
+        window.location.hash = `#/login?next=${next}`
+      }
+    }
     throw new HTTPError(
       response.status,
       response.statusText,
@@ -49,6 +64,37 @@ async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
   return response.json()
 }
 
+async function requestText(url: string, options: RequestInit = {}): Promise<string> {
+  const headers = new Headers(options.headers ?? {})
+  const authHeader = buildBasicAuthHeader()
+  if (authHeader && !headers.has('Authorization')) {
+    headers.set('Authorization', authHeader)
+  }
+
+  const defaultOptions: RequestInit = {
+    credentials: 'include',
+  }
+
+  const response = await fetch(url, { ...defaultOptions, ...options, headers })
+
+  if (!response.ok) {
+    if (response.status === 401) {
+      clearDashboardAuth()
+      if (!window.location.hash.startsWith('#/login')) {
+        const next = encodeURIComponent(window.location.hash || '#/')
+        window.location.hash = `#/login?next=${next}`
+      }
+    }
+    throw new HTTPError(
+      response.status,
+      response.statusText,
+      `HTTP ${response.status}`,
+    )
+  }
+
+  return response.text()
+}
+
 async function requestV2<T>(
   url: string,
   options: RequestInit = {},
@@ -57,7 +103,13 @@ async function requestV2<T>(
     credentials: 'include',
   }
 
-  const response = await fetch(url, { ...defaultOptions, ...options })
+  const headers = new Headers(options.headers ?? {})
+  const authHeader = buildBasicAuthHeader()
+  if (authHeader && !headers.has('Authorization')) {
+    headers.set('Authorization', authHeader)
+  }
+
+  const response = await fetch(url, { ...defaultOptions, ...options, headers })
   const envelope = (await response.json().catch(() => null)) as
     | V2Envelope<T>
     | null
@@ -96,20 +148,22 @@ export const buildQueryString = (
 export const http = {
   get: <T>(url: string, options?: RequestInit) =>
     request<T>(url, { ...options, method: 'GET' }),
+  getText: (url: string, options?: RequestInit) =>
+    requestText(url, { ...options, method: 'GET' }),
   getV2: <T>(url: string, options?: RequestInit) =>
     requestV2<T>(url, { ...options, method: 'GET' }),
   post: <T>(url: string, body?: any, options?: RequestInit) =>
     request<T>(url, {
       ...options,
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...options?.headers },
+      headers: { 'Content-Type': 'application/json', ...Object.fromEntries(new Headers(options?.headers ?? {})) },
       body: JSON.stringify(body),
     }),
   put: <T>(url: string, body?: any, options?: RequestInit) =>
     request<T>(url, {
       ...options,
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json', ...options?.headers },
+      headers: { 'Content-Type': 'application/json', ...Object.fromEntries(new Headers(options?.headers ?? {})) },
       body: JSON.stringify(body),
     }),
   delete: <T>(url: string, options?: RequestInit) =>

@@ -1,9 +1,12 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
+import LoginView from '../views/LoginView.vue'
 import ServerOverview from '../views/ServerOverview.vue'
+import ServerConfig from '../views/ServerConfig.vue'
 import Clients from '../views/Clients.vue'
 import ClientDetail from '../views/ClientDetail.vue'
 import Proxies from '../views/Proxies.vue'
 import ProxyDetail from '../views/ProxyDetail.vue'
+import { hasDashboardAuth } from '../utils/auth'
 
 const router = createRouter({
   history: createWebHashHistory(),
@@ -12,9 +15,20 @@ const router = createRouter({
   },
   routes: [
     {
+      path: '/login',
+      name: 'Login',
+      component: LoginView,
+      meta: { public: true },
+    },
+    {
       path: '/',
       name: 'ServerOverview',
       component: ServerOverview,
+    },
+    {
+      path: '/config',
+      name: 'ServerConfig',
+      component: ServerConfig,
     },
     {
       path: '/clients',
@@ -37,6 +51,21 @@ const router = createRouter({
       component: ProxyDetail,
     },
   ],
+})
+
+router.beforeEach((to) => {
+  if (!to.meta.public && !hasDashboardAuth()) {
+    return {
+      name: 'Login',
+      query: { next: encodeURIComponent(to.fullPath) },
+    }
+  }
+
+  if (to.name === 'Login' && hasDashboardAuth()) {
+    return { name: 'ServerOverview' }
+  }
+
+  return true
 })
 
 export default router

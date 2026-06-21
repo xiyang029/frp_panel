@@ -74,6 +74,20 @@ func TestServerMetricsRunUsesClockTicker(t *testing.T) {
 	}, time.Second, time.Millisecond)
 }
 
+func TestServerMetricsRemoveProxyDeletesOfflineEntry(t *testing.T) {
+	require := require.New(t)
+
+	metrics := newServerMetrics()
+	metrics.NewProxy("proxy", "tcp", "user", "client-id")
+	metrics.CloseProxy("proxy", "tcp")
+
+	require.NotNil(metrics.GetProxyByName("proxy"))
+
+	metrics.RemoveProxy("proxy", "tcp")
+
+	require.Nil(metrics.GetProxyByName("proxy"))
+}
+
 func (m *serverMetrics) hasProxyStatistics(name string) bool {
 	m.mu.Lock()
 	defer m.mu.Unlock()

@@ -2,11 +2,12 @@
   <div class="proxy-detail-page">
     <!-- Fixed Header -->
     <div class="detail-top">
-      <nav class="breadcrumb">
-        <router-link :to="isStore ? '/proxies?tab=store' : '/proxies'" class="breadcrumb-link">Proxies</router-link>
-        <span class="breadcrumb-sep">&rsaquo;</span>
-        <span class="breadcrumb-current">{{ proxyName }}</span>
-      </nav>
+      <n-breadcrumb separator=">">
+        <n-breadcrumb-item>
+          <router-link :to="isStore ? '/proxies?tab=store' : '/proxies'" class="breadcrumb-link">代理列表</router-link>
+        </n-breadcrumb-item>
+        <n-breadcrumb-item>{{ proxyName }}</n-breadcrumb-item>
+      </n-breadcrumb>
 
       <template v-if="proxy">
         <div class="detail-header">
@@ -19,14 +20,14 @@
               </span>
             </div>
             <p class="header-subtitle">
-              Source: {{ displaySource }} &middot; Type:
+              来源：{{ displaySource }} &middot; 类型：
               {{ proxy.type.toUpperCase() }}
             </p>
           </div>
           <div v-if="isStore" class="header-actions">
-            <ActionButton variant="outline" size="small" @click="handleEdit">
-              Edit
-            </ActionButton>
+            <n-button type="primary" secondary quaternary size="small" @click="handleEdit">
+              编辑
+            </n-button>
           </div>
         </div>
       </template>
@@ -34,19 +35,19 @@
 
     <!-- Scrollable Content -->
     <div v-if="notFound" class="not-found">
-      <p class="empty-text">Proxy not found</p>
-      <p class="empty-hint">The proxy "{{ proxyName }}" does not exist.</p>
-      <ActionButton variant="outline" @click="router.push('/proxies')">
-        Back to Proxies
-      </ActionButton>
+      <p class="empty-text">未找到代理</p>
+      <p class="empty-hint">代理“{{ proxyName }}”不存在。</p>
+      <n-button type="primary" secondary quaternary @click="router.push('/proxies')">
+        返回代理列表
+      </n-button>
     </div>
 
-    <div v-else-if="proxy" v-loading="loading" class="detail-content">
+    <n-spin v-else-if="proxy" :show="loading" class="detail-content">
       <!-- Error Banner -->
       <div v-if="proxy.err" class="error-banner">
-        <el-icon class="error-icon"><Warning /></el-icon>
+        <n-icon class="error-icon"><warning-outline /></n-icon>
         <div>
-          <div class="error-title">Connection Error</div>
+          <div class="error-title">连接异常</div>
           <div class="error-message">{{ proxy.err }}</div>
         </div>
       </div>
@@ -57,9 +58,9 @@
         :model-value="formData"
         readonly
       />
-    </div>
+    </n-spin>
 
-    <div v-else v-loading="loading" class="loading-area"></div>
+    <n-spin v-else :show="loading" class="loading-area"></n-spin>
 
   </div>
 </template>
@@ -67,18 +68,19 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
-import { Warning } from '@element-plus/icons-vue'
-import ActionButton from '@shared/components/ActionButton.vue'
+import { NBreadcrumb, NBreadcrumbItem, NButton, NIcon, NSpin } from 'naive-ui'
+import { WarningOutline } from '@vicons/ionicons5'
 import ProxyFormLayout from '../components/proxy-form/ProxyFormLayout.vue'
 import { getProxyConfig, getStoreProxy } from '../api/frpc'
 import { useProxyStore } from '../stores/proxy'
 import { storeProxyToForm } from '../types'
 import type { ProxyStatus, ProxyDefinition, ProxyFormData } from '../types'
+import { createMessageHelpers } from '../naive'
 
 const route = useRoute()
 const router = useRouter()
 const proxyStore = useProxyStore()
+const message = createMessageHelpers()
 
 const proxyName = route.params.name as string
 const proxy = ref<ProxyStatus | null>(null)
@@ -131,14 +133,14 @@ onMounted(async () => {
       notFound.value = true
     }
   } catch (err: any) {
-    ElMessage.error('Failed to load proxy: ' + err.message)
+    message.error('加载代理失败：' + err.message)
   } finally {
     loading.value = false
   }
 })
 
 const displaySource = computed(() =>
-  isStore.value ? 'store' : 'config',
+  isStore.value ? '本地存储' : '配置文件',
 )
 
 const statusClass = computed(() => {
@@ -180,30 +182,18 @@ const handleEdit = () => {
   padding: 0 24px 160px;
 }
 
-.breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: $spacing-sm;
-  font-size: $font-size-md;
+.n-breadcrumb {
   margin-bottom: $spacing-lg;
 }
 
 .breadcrumb-link {
   color: $color-text-secondary;
   text-decoration: none;
+  transition: color $transition-fast;
 
   &:hover {
     color: $color-text-primary;
   }
-}
-
-.breadcrumb-sep {
-  color: $color-text-light;
-}
-
-.breadcrumb-current {
-  color: $color-text-primary;
-  font-weight: $font-weight-medium;
 }
 
 .detail-header {

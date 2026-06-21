@@ -1,88 +1,72 @@
 <template>
-  <div class="configure-page">
+  <section class="configure-page">
     <div class="page-header">
-      <div class="title-section">
-        <h1 class="page-title">Config</h1>
+      <div>
+        <h1 class="page-title">客户端配置</h1>
+        <p class="page-subtitle">编辑 `frpc` 当前配置文件，保存后立即触发重载。</p>
       </div>
+      <a
+        href="https://github.com/fatedier/frp#configuration-files"
+        target="_blank"
+        class="docs-link"
+      >
+        查看配置文档
+      </a>
     </div>
 
-    <div class="editor-header">
-      <div class="header-left">
-        <a
-          href="https://github.com/fatedier/frp#configuration-files"
-          target="_blank"
-          class="docs-link"
-        >
-          <el-icon><Link /></el-icon>
-          Documentation
-        </a>
-      </div>
-      <div class="header-actions">
-        <ActionButton @click="handleUpload">Update & Reload</ActionButton>
-      </div>
-    </div>
+    <n-card :bordered="false" class="editor-card">
+      <template #header>
+        <div class="card-header">
+          <div>
+            <div class="card-title">TOML 配置</div>
+            <div class="card-desc">这里编辑的是后端当前使用的配置文件内容。</div>
+          </div>
+          <n-space>
+            <n-button secondary @click="fetchData" :loading="clientStore.loading">
+              刷新
+            </n-button>
+            <n-button type="primary" @click="handleUpload" :loading="uploading">
+              保存并重载
+            </n-button>
+          </n-space>
+        </div>
+      </template>
 
-    <div class="editor-wrapper">
-      <el-input
+      <n-input
+        v-model:value="configContent"
         type="textarea"
         :autosize="false"
-        v-model="configContent"
-        placeholder="# frpc configuration file content...
-
-serverAddr = &quot;127.0.0.1&quot;
-serverPort = 7000"
+        placeholder="# frpc configuration file content..."
         class="code-editor"
-      ></el-input>
-    </div>
-
-    <ConfirmDialog
-      v-model="confirmVisible"
-      title="Confirm Update"
-      message="This operation will update your frpc configuration and reload it. Do you want to continue?"
-      confirm-text="Update"
-      :loading="uploading"
-      :is-mobile="isMobile"
-      @confirm="doUpload"
-    />
-  </div>
+      />
+    </n-card>
+  </section>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { ElMessage } from 'element-plus'
-import { Link } from '@element-plus/icons-vue'
+import { NButton, NCard, NInput, NSpace, useDialog } from 'naive-ui'
+import { createMessageHelpers } from '../naive'
 import { useClientStore } from '../stores/client'
-import ActionButton from '@shared/components/ActionButton.vue'
-import ConfirmDialog from '@shared/components/ConfirmDialog.vue'
-import { useResponsive } from '../composables/useResponsive'
 
-const { isMobile } = useResponsive()
 const clientStore = useClientStore()
+const dialog = useDialog()
+const message = createMessageHelpers()
 const configContent = ref('')
+const uploading = ref(false)
 
 const fetchData = async () => {
   try {
     await clientStore.fetchConfig()
     configContent.value = clientStore.config
   } catch (err: any) {
-    ElMessage({
-      showClose: true,
-      message: 'Get configuration failed: ' + err.message,
-      type: 'warning',
-    })
+    message.warning('获取配置失败: ' + err.message)
   }
-}
-
-const confirmVisible = ref(false)
-const uploading = ref(false)
-
-const handleUpload = () => {
-  confirmVisible.value = true
 }
 
 const doUpload = async () => {
   if (!configContent.value.trim()) {
-    ElMessage.warning('Configuration content cannot be empty!')
+    message.warning('配置内容不能为空')
     return
   }
 
@@ -90,107 +74,84 @@ const doUpload = async () => {
   try {
     await clientStore.saveConfig(configContent.value)
     await clientStore.reload()
-    ElMessage.success('Configuration updated and reloaded successfully')
-    confirmVisible.value = false
+    message.success('配置已更新并完成重载')
   } catch (err: any) {
-    ElMessage.error('Update failed: ' + err.message)
+    message.error('更新失败: ' + err.message)
   } finally {
     uploading.value = false
   }
 }
 
+const handleUpload = () => {
+  dialog.warning({
+    title: '确认更新',
+    content: '这会覆盖当前 frpc 配置文件，并立即触发重载。',
+    positiveText: '确认',
+    negativeText: '取消',
+    onPositiveClick: doUpload,
+  })
+}
+
 fetchData()
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .configure-page {
-  height: 100%;
-  overflow: hidden;
-  padding: $spacing-xl 40px;
-  max-width: 960px;
-  margin: 0 auto;
-  @include flex-column;
-  gap: $spacing-sm;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
-
-.editor-wrapper {
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
-}
-
 
 .page-header {
-  @include flex-column;
-  gap: $spacing-sm;
-  margin-bottom: $spacing-sm;
-}
-
-
-.editor-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-}
-
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: $spacing-sm;
+  gap: 16px;
+  align-items: flex-start;
 }
 
 .docs-link {
-  display: flex;
-  align-items: center;
-  gap: $spacing-xs;
-  color: $color-text-muted;
+  color: var(--app-accent);
   text-decoration: none;
-  font-size: $font-size-sm;
-  transition: color $transition-fast;
-
-  &:hover {
-    color: $color-text-primary;
-  }
+  font-weight: 600;
 }
 
-.code-editor {
-  height: 100%;
-
-  :deep(.el-textarea__inner) {
-    height: 100% !important;
-    overflow-y: auto;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    font-size: $font-size-sm;
-    line-height: 1.6;
-    padding: $spacing-lg;
-    border-radius: $radius-md;
-    background: $color-bg-tertiary;
-    border: 1px solid $color-border-light;
-    resize: none;
-
-    &:focus {
-      border-color: $color-text-light;
-      box-shadow: none;
-    }
-  }
+.editor-card {
+  background: var(--app-panel);
+  backdrop-filter: blur(16px);
+  box-shadow: var(--app-shadow);
 }
 
-@include mobile {
-  .configure-page {
-    padding: $spacing-xl $spacing-lg;
-  }
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+}
 
-  .header-left {
-    justify-content: space-between;
-  }
+.card-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--app-text);
+}
 
-  .header-actions {
-    justify-content: flex-end;
+.card-desc {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--app-text-muted);
+}
+
+.code-editor :deep(textarea) {
+  min-height: 62vh !important;
+  font-family: var(--app-mono-font-family);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+@media (max-width: 767px) {
+  .page-header,
+  .card-header {
+    flex-direction: column;
+    align-items: stretch;
   }
 }
 </style>
