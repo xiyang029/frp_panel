@@ -88,7 +88,7 @@
 import { ref, computed, reactive, onMounted, h } from 'vue'
 import { useRouter } from 'vue-router'
 import { NButton, NCard, NDropdown, NEmpty, NGrid, NGi, NIcon, NInput, NModal, NSelect, NSpin, NSpace, NTag, NText } from 'naive-ui'
-import { CreateOutline, EllipsisHorizontal, RefreshOutline, SearchOutline, TrashOutline } from '@vicons/ionicons5'
+import { CreateOutline, EllipsisHorizontal, SearchOutline, TrashOutline } from '@vicons/ionicons5'
 import { useVisitorStore } from '../stores/visitor'
 import { useResponsive } from '../composables/useResponsive'
 import type { VisitorDefinition } from '../types'

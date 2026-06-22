@@ -103,7 +103,7 @@
 import { ref, computed, reactive, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { NButton, NCard, NEmpty, NGrid, NGi, NIcon, NInput, NModal, NSelect, NSpin, NSpace, NTabPane, NTabs, NTag, NText } from 'naive-ui'
-import { RefreshOutline, SearchOutline } from '@vicons/ionicons5'
+import { SearchOutline } from '@vicons/ionicons5'
 import ProxyCard from '../components/ProxyCard.vue'
 import { useProxyStore } from '../stores/proxy'
 import { useResponsive } from '../composables/useResponsive'
