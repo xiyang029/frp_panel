@@ -1,12 +1,17 @@
 <template>
   <n-space vertical size="large">
     <n-space justify="space-between" align="center" wrap>
-      <n-text class="page-title" strong>客户端列表</n-text>
+      <n-text strong style="font-size: 28px;">客户端列表</n-text>
 
       <n-radio-group v-model:value="statusFilter" size="small">
         <n-radio-button v-for="tab in statusTabs" :key="tab.value" :value="tab.value">
           <n-space align="center" :size="6">
-            <span class="status-dot" :class="tab.value" />
+            <span :style="{
+              width: '8px',
+              height: '8px',
+              borderRadius: '999px',
+              background: tab.value === 'online' ? 'var(--n-success-color)' : 'var(--n-text-color-3)',
+            }" />
             <span>{{ tab.label }}</span>
             <n-text v-if="tab.count !== null" depth="3">{{ tab.count }}</n-text>
           </n-space>
@@ -17,17 +22,17 @@
     <n-input v-model:value="searchText" placeholder="搜索客户端名称、用户或标识" clearable>
       <template #prefix>
         <n-icon>
-          <SearchOutline />
+          <Search />
         </n-icon>
       </template>
     </n-input>
 
     <n-spin :show="loading">
       <n-space v-if="clients.length > 0" vertical :size="16">
-        <n-card v-for="client in clients" :key="client.key" size="small" hoverable class="client-card"
+        <n-card v-for="client in clients" :key="client.key" size="small" hoverable :style="{ cursor: 'pointer' }"
           @click="viewClientDetail(client.key)">
           <n-space justify="space-between" align="start" wrap>
-            <n-space vertical :size="8" class="client-card-main">
+            <n-space vertical :size="8" :style="{ minWidth: '0' }">
               <n-space align="center" :size="8" wrap>
                 <n-text strong>{{ client.displayName }}</n-text>
                 <n-tag v-if="client.version" size="small" type="success" round>
@@ -51,13 +56,13 @@
                 </n-tag>
               </n-space>
 
-              <n-text depth="3" class="client-card-meta">
+              <n-text depth="3" style="font-size: 13px;">
                 {{ client.online ? client.lastConnectedAgo : client.disconnectedAgo }}
               </n-text>
             </n-space>
 
-            <n-icon depth="3" :size="18" class="client-card-arrow">
-              <ChevronForwardOutline />
+            <n-icon depth="3" :size="18" style="flex-shrink: 0;">
+              <ChevronRight />
             </n-icon>
           </n-space>
         </n-card>
@@ -88,7 +93,7 @@ import {
   NTag,
   NText,
 } from 'naive-ui'
-import { ChevronForwardOutline, SearchOutline } from '@vicons/ionicons5'
+import { ChevronRight, Search } from '@vicons/tabler'
 import { Client } from '../utils/client'
 import { getClientsV2 } from '../api/client'
 import { createMessageHelpers } from '../naive'
@@ -225,40 +230,3 @@ onUnmounted(() => {
   clearSearchDebounce()
 })
 </script>
-
-<style scoped>
-.page-title {
-  font-size: 28px;
-}
-
-.client-card {
-  cursor: pointer;
-}
-
-.client-card-main {
-  min-width: 0;
-}
-
-.client-card-meta {
-  font-size: 13px;
-}
-
-.client-card-arrow {
-  flex-shrink: 0;
-}
-
-.status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-  background: var(--n-text-color-3);
-}
-
-.status-dot.online {
-  background: var(--n-success-color);
-}
-
-.status-dot.offline {
-  background: var(--n-text-color-3);
-}
-</style>

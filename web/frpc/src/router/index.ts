@@ -8,7 +8,7 @@ import VisitorDetail from '../views/VisitorDetail.vue'
 import VisitorEdit from '../views/VisitorEdit.vue'
 import VisitorList from '../views/VisitorList.vue'
 import { useProxyStore } from '../stores/proxy'
-import { hasDashboardAuth } from '../utils/auth'
+import { hasDashboardAuth, probeDashboardAuthRequired } from '../utils/auth'
 
 const router = createRouter({
   history: createWebHashHistory(),
@@ -76,15 +76,28 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to) => {
-  if (!to.meta.public && !hasDashboardAuth()) {
+  if (to.name === 'Login' && hasDashboardAuth()) {
+    return { name: 'ProxyList' }
+  }
+
+  if (to.meta.public) {
+    return true
+  }
+
+  if (hasDashboardAuth()) {
+    return true
+  }
+
+  const authRequired = await probeDashboardAuthRequired()
+  if (!authRequired) {
+    return true
+  }
+
+  if (!to.meta.public && authRequired && !hasDashboardAuth()) {
     return {
       name: 'Login',
       query: { next: encodeURIComponent(to.fullPath) },
     }
-  }
-
-  if (to.name === 'Login' && hasDashboardAuth()) {
-    return { name: 'ProxyList' }
   }
 
   if (!to.matched.some((record) => record.meta.requiresStore)) {

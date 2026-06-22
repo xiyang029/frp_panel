@@ -1,7 +1,7 @@
 <template>
   <n-space vertical>
     <n-space justify="space-between" align="center" wrap>
-      <n-text style="font-size: 24px;" strong>{{ title }}</n-text>
+      <n-text style="font-size: 28px;" strong>{{ title }}</n-text>
 
       <n-space align="center" :size="12">
         <n-button v-if="docUrl" text tag="a" :href="docUrl" target="_blank" rel="noreferrer">

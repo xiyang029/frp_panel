@@ -10,10 +10,15 @@
                 <n-layout-header bordered style="height: 64px; padding: 0 20px;">
                   <n-space justify="space-between" align="center" :wrap="false" style="height: 100%;">
                     <n-space align="center" :size="12" :wrap="false">
-                      <n-avatar round :size="40" :class="{ 'clickable-logo': isMobile }" :style="{
-                        backgroundColor: 'var(--n-primary-color-hover)',
-                        cursor: isMobile ? 'pointer' : 'default'
-                      }" @click="isMobile && toggleSidebar()">
+                      <n-avatar
+                        round
+                        :size="40"
+                        :style="{
+                          backgroundColor: 'var(--n-primary-color-hover)',
+                          cursor: isMobile ? 'pointer' : 'default',
+                        }"
+                        @click="isMobile && toggleSidebar()"
+                      >
                         <LogoIcon style="width: 40px; height: 40px; display: block;" />
                       </n-avatar>
 
@@ -25,13 +30,13 @@
                     <n-space align="center" :size="12">
                       <n-switch v-model:value="isDark">
                         <template #checked-icon>
-                          <n-icon>
-                            <Moon />
-                          </n-icon>
+                        <n-icon>
+                          <MoonStars />
+                        </n-icon>
                         </template>
                         <template #unchecked-icon>
                           <n-icon>
-                            <Sunny />
+                          <Sun />
                           </n-icon>
                         </template>
                       </n-switch>
@@ -75,7 +80,7 @@
 import { defineComponent, h, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useDark } from '@vueuse/core'
-import { Moon, Sunny } from '@vicons/ionicons5' // 彻底移除了 MenuOutline
+import { MoonStars, Sun } from '@vicons/tabler'
 import {
   NConfigProvider,
   NDialogProvider,
@@ -163,20 +168,3 @@ const NaiveBridge = defineComponent({
   },
 })
 </script>
-
-<style scoped>
-/* 移动端下 Logo 图标的点击与悬停视觉反馈 */
-.clickable-logo {
-  transition: opacity 0.2s ease, transform 0.1s ease;
-}
-
-.clickable-logo:hover {
-  opacity: 0.85;
-}
-
-.clickable-logo:active {
-  transform: scale(0.95);
-  /* 按下时有微小的缩放反馈 */
-  opacity: 0.7;
-}
-</style>

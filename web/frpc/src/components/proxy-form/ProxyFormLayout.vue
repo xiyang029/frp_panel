@@ -199,24 +199,17 @@
       </template>
 
       <template v-if="['stcp', 'sudp', 'xtcp'].includes(form.type)">
-        <n-grid responsive="screen" cols="1 m:2" :x-gap="16" :y-gap="8">
-          <n-form-item-gi label="密钥" path="secretKey">
-            <n-input v-model:value="form.secretKey" :disabled="readonly" type="password" show-password-on="click" />
-          </n-form-item-gi>
-          <n-form-item-gi label="允许访问用户">
-            <n-empty
-              v-if="readonly && form.allowUsers.length === 0"
-              size="small"
-              description="未配置"
-            />
-            <n-dynamic-tags
-              v-else
-              :value="form.allowUsers"
-              :disabled="readonly"
-              :closable="!readonly"
-              :input-props="{ placeholder: 'username' }"
-              @update:value="form.allowUsers = $event as string[]"
-            />
+          <n-grid responsive="screen" cols="1 m:2" :x-gap="16" :y-gap="8">
+            <n-form-item-gi label="密钥" path="secretKey">
+              <n-input v-model:value="form.secretKey" :disabled="readonly" type="password" show-password-on="click" />
+            </n-form-item-gi>
+            <n-form-item-gi label="允许访问用户">
+              <n-input
+                :value="allowUsersText"
+                :disabled="readonly"
+                placeholder="username1, username2"
+                @update:value="handleAllowUsersInput"
+              />
           </n-form-item-gi>
         </n-grid>
       </template>
@@ -476,7 +469,6 @@ import {
   NCollapse,
   NCollapseItem,
   NDynamicInput,
-  NDynamicTags,
   NEmpty,
   NFormItem,
   NFormItemGi,
@@ -618,6 +610,15 @@ const healthCheckHeaders = computed({
     form.value.healthCheckHTTPHeaders = val.map((h) => ({ name: h.key, value: h.value }))
   },
 })
+
+const allowUsersText = computed(() => form.value.allowUsers.join(', '))
+
+const handleAllowUsersInput = (value: string) => {
+  form.value.allowUsers = value
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean)
+}
 
 const hasLoadBalanceValue = computed(() => !!form.value.loadBalancerGroup)
 const hasNatValue = computed(() => form.value.natTraversalDisableAssistedAddrs)

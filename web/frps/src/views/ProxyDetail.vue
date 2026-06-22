@@ -1,22 +1,21 @@
 <template>
-  <n-space vertical size="large">
     <n-breadcrumb separator=">">
       <template v-if="fromClient">
         <n-breadcrumb-item>
-          <router-link to="/clients" class="breadcrumb-link">客户端列表</router-link>
+          <router-link to="/clients" style="text-decoration: none;">客户端列表</router-link>
         </n-breadcrumb-item>
         <n-breadcrumb-item>
-          <router-link :to="`/clients/${fromClient}`" class="breadcrumb-link">
+          <router-link :to="`/clients/${fromClient}`" style="text-decoration: none;">
             {{ fromClient }}
           </router-link>
         </n-breadcrumb-item>
       </template>
       <template v-else>
         <n-breadcrumb-item>
-          <router-link to="/proxies" class="breadcrumb-link">代理列表</router-link>
+          <router-link to="/proxies" style="text-decoration: none;">代理列表</router-link>
         </n-breadcrumb-item>
         <n-breadcrumb-item v-if="proxy?.clientID">
-          <router-link :to="clientLink" class="breadcrumb-link">
+          <router-link :to="clientLink" style="text-decoration: none;">
             {{ proxy.user ? `${proxy.user}.${proxy.clientID}` : proxy.clientID }}
           </router-link>
         </n-breadcrumb-item>
@@ -33,79 +32,87 @@
         </template>
       </n-empty>
 
-      <n-space v-else vertical size="large">
+      <div v-else>
         <n-card :bordered="false">
-          <n-space vertical size="large">
-            <n-space justify="space-between" align="start" wrap>
-              <n-space align="start" :size="16" wrap>
-                <div class="proxy-icon" :style="{ backgroundColor: proxyIconConfig.color }">
-                  <span>{{ proxyIconConfig.text }}</span>
+          <div class="proxy-header">
+            <div class="proxy-main">
+              <n-avatar
+                round
+                :size="56"
+                :style="{
+                  backgroundColor: proxyIconConfig.color,
+                  color: '#fff',
+                  fontSize: '26px',
+                  fontWeight: '700',
+                  flexShrink: 0,
+                }"
+              >
+                {{ proxyIconConfig.text }}
+              </n-avatar>
+              <div class="proxy-meta">
+                <div class="proxy-title-row">
+                  <n-text strong style="font-size: 20px;">{{ proxy.name }}</n-text>
+                  <n-tag :bordered="false" size="small" type="info" round uppercase>
+                    {{ proxy.type }}
+                  </n-tag>
+                  <n-tag
+                    :bordered="false"
+                    size="small"
+                    :type="proxy.status === 'online' ? 'success' : 'default'"
+                    round
+                  >
+                    {{ proxy.status }}
+                  </n-tag>
                 </div>
-                <n-space vertical :size="6">
-                  <n-space align="center" :size="8" :wrap="true">
-                    <n-text class="proxy-name" strong>{{ proxy.name }}</n-text>
-                    <n-tag :bordered="false" size="small" type="info" round uppercase>
-                      {{ proxy.type }}
-                    </n-tag>
-                    <n-tag
-                      :bordered="false"
-                      size="small"
-                      :type="proxy.status === 'online' ? 'success' : 'default'"
-                      round
-                    >
-                      {{ proxy.status }}
-                    </n-tag>
-                  </n-space>
-                  <n-space align="center" :size="8" wrap>
-                    <n-button v-if="proxy.clientID" text @click="router.push(clientLink)">
-                      <template #icon>
-                        <n-icon><DesktopOutline /></n-icon>
-                      </template>
-                      {{ proxy.user ? `${proxy.user}.${proxy.clientID}` : proxy.clientID }}
-                    </n-button>
-                    <n-text v-if="proxy.lastStartTime" depth="3">
-                      最近启动 {{ proxy.lastStartTime }}
-                    </n-text>
-                    <n-text v-if="proxy.lastCloseTime" depth="3">
-                      最近关闭 {{ proxy.lastCloseTime }}
-                    </n-text>
-                  </n-space>
-                </n-space>
-              </n-space>
-            </n-space>
-
-            <n-grid responsive="screen" cols="1 s:3" :x-gap="12" :y-gap="12">
-              <n-grid-item v-if="proxy.port">
-                <n-card size="small">
-                  <n-statistic label="端口" :value="proxy.port" />
-                </n-card>
-              </n-grid-item>
-              <n-grid-item>
-                <n-card size="small">
-                  <n-statistic label="连接数" :value="proxy.conns" />
-                </n-card>
-              </n-grid-item>
-              <n-grid-item>
-                <n-card size="small">
-                  <n-statistic label="流量">
-                    <template #default>
-                      <n-space align="center" :size="4">
-                        <n-text strong>↓ {{ formatFileSize(proxy.trafficIn) }}</n-text>
-                        <n-text depth="3">/</n-text>
-                        <n-text strong>↑ {{ formatFileSize(proxy.trafficOut) }}</n-text>
-                      </n-space>
+                <div class="proxy-subtitle-row">
+                  <n-button v-if="proxy.clientID" text @click="router.push(clientLink)">
+                    <template #icon>
+                      <n-icon><DeviceDesktop /></n-icon>
                     </template>
-                  </n-statistic>
-                </n-card>
-              </n-grid-item>
-            </n-grid>
-          </n-space>
+                    {{ proxy.user ? `${proxy.user}.${proxy.clientID}` : proxy.clientID }}
+                  </n-button>
+                  <n-text v-if="proxy.lastStartTime" depth="3">
+                    最近启动 {{ proxy.lastStartTime }}
+                  </n-text>
+                  <n-text v-if="proxy.lastCloseTime" depth="3">
+                    最近关闭 {{ proxy.lastCloseTime }}
+                  </n-text>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <n-grid responsive="screen" cols="1 s:3" :x-gap="12" :y-gap="12">
+            <n-grid-item v-if="proxy.port">
+              <n-card size="small">
+                <n-statistic label="端口" :value="proxy.port" />
+              </n-card>
+            </n-grid-item>
+            <n-grid-item>
+              <n-card size="small">
+                <n-statistic label="连接数" :value="proxy.conns" />
+              </n-card>
+            </n-grid-item>
+            <n-grid-item>
+              <n-card size="small">
+                <n-statistic label="流量">
+                  <template #default>
+                    <n-space align="center" :size="4">
+                      <n-text strong>↓ {{ formatFileSize(proxy.trafficIn) }}</n-text>
+                      <n-text depth="3">/</n-text>
+                      <n-text strong>↑ {{ formatFileSize(proxy.trafficOut) }}</n-text>
+                    </n-space>
+                  </template>
+                </n-statistic>
+              </n-card>
+            </n-grid-item>
+          </n-grid>
         </n-card>
 
         <n-card :bordered="false">
           <template #header>
-            <n-space align="center" :size="8">
-              <n-icon :size="18"><SettingsOutline /></n-icon>
+            <n-space>
+              <n-icon :size="18"><Settings /></n-icon>
               <n-text strong>配置信息</n-text>
             </n-space>
           </template>
@@ -184,85 +191,62 @@
             </n-grid-item>
           </n-grid>
 
-          <n-space v-if="proxy.annotations && proxy.annotations.size > 0" class="annotations-section" wrap :size="8">
+          <div v-if="proxy.annotations && proxy.annotations.size > 0" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;">
             <n-tag v-for="[key, value] in proxy.annotations" :key="key" :bordered="false" size="small">
               {{ key }}: {{ value }}
             </n-tag>
-          </n-space>
+          </div>
         </n-card>
 
         <n-card :bordered="false" title="流量统计">
           <n-spin :show="trafficLoading">
             <n-empty v-if="!trafficLoading && chartData.length === 0" description="暂无流量数据" />
 
-            <n-space v-else vertical :size="16" class="traffic-card">
-              <n-space justify="space-between" align="center">
-                <n-space :size="16">
+            <div v-else>
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px;">
+                  <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
                   <n-text depth="3">近 7 天流量</n-text>
                   <n-text depth="3">
                     峰值 {{ chartData.some(d => d.in > 0 || d.out > 0) ? formatFileSize(maxTrafficValue) : '0 B' }}
                   </n-text>
-                </n-space>
-                <n-space :size="12" align="center">
-                  <n-space align="center" :size="6">
-                    <span class="legend-dot in" />
-                    <n-text depth="3">入站流量</n-text>
-                  </n-space>
-                  <n-space align="center" :size="6">
-                    <span class="legend-dot out" />
-                    <n-text depth="3">出站流量</n-text>
-                  </n-space>
-                </n-space>
-              </n-space>
-
-              <div class="chart-grid">
-                <div class="chart-axis">
-                  <span>{{ formatFileSize(maxTrafficValue) }}</span>
-                  <span>{{ formatFileSize(maxTrafficValue / 2) }}</span>
-                  <span>0</span>
-                  <div class="main-axis-y" />
                 </div>
-
-                <div class="bars-area">
-                  <div class="grid-line line-25" />
-                  <div class="grid-line line-50" />
-                  <div class="grid-line line-75" />
-                  
-                  <div class="main-axis-x" />
-
-                  <div v-for="(item, index) in chartData" :key="index" class="day-column">
-                    <div class="bars-group">
-                      <n-tooltip placement="top">
-                        <template #trigger>
-                          <div class="bar bar-in" :style="{ height: item.inPercent + '%' }" />
-                        </template>
-                        入站：{{ formatFileSize(item.in) }}
-                      </n-tooltip>
-                      <n-tooltip placement="top">
-                        <template #trigger>
-                          <div class="bar bar-out" :style="{ height: item.outPercent + '%' }" />
-                        </template>
-                        出站：{{ formatFileSize(item.out) }}
-                      </n-tooltip>
-                    </div>
-                    <span class="date-label">{{ item.date }}</span>
-                  </div>
+                <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                  <span style="display:inline-flex;align-items:center;gap:6px;">
+                    <span style="width:10px;height:10px;border-radius:999px;display:inline-block;background-color:#18a058;" />
+                    <n-text depth="3">入站流量</n-text>
+                  </span>
+                  <span style="display:inline-flex;align-items:center;gap:6px;">
+                    <span style="width:10px;height:10px;border-radius:999px;display:inline-block;background-color:#2080f0;" />
+                    <n-text depth="3">出站流量</n-text>
+                  </span>
                 </div>
               </div>
-            </n-space>
+
+              <v-chart class="traffic-chart" :option="trafficChartOption" autoresize />
+            </div>
           </n-spin>
         </n-card>
-      </n-space>
+      </div>
     </n-spin>
-  </n-space>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import VChart from 'vue-echarts'
+import type { EChartsOption } from 'echarts'
+import { use } from 'echarts/core'
+import { BarChart } from 'echarts/charts'
+import {
+  GridComponent,
+  LegendComponent,
+  TooltipComponent,
+} from 'echarts/components'
+import { CanvasRenderer } from 'echarts/renderers'
 import {
   NBreadcrumb,
   NBreadcrumbItem,
+  NAvatar,
   NButton,
   NCard,
   NEmpty,
@@ -274,9 +258,8 @@ import {
   NStatistic,
   NTag,
   NText,
-  NTooltip,
 } from 'naive-ui'
-import { DesktopOutline, SettingsOutline } from '@vicons/ionicons5'
+import { DeviceDesktop, Settings } from '@vicons/tabler'
 import { getProxyByName } from '../api/proxy'
 import { getServerInfo } from '../api/server'
 import {
@@ -292,6 +275,8 @@ import {
 import { getProxyTraffic } from '../api/proxy'
 import { formatFileSize } from '../utils/format'
 import { createMessageHelpers } from '../naive'
+
+use([BarChart, GridComponent, LegendComponent, TooltipComponent, CanvasRenderer])
 
 const route = useRoute()
 const router = useRouter()
@@ -311,8 +296,6 @@ const chartData = ref<
     date: string
     in: number
     out: number
-    inPercent: number
-    outPercent: number
   }>
 >([])
 const maxTrafficValue = ref(0)
@@ -328,21 +311,122 @@ const clientLink = computed(() => {
 const proxyIconConfig = computed(() => {
   const type = proxy.value?.type?.toLowerCase() || 'tcp'
   const firstChar = type.charAt(0).toUpperCase()
-  
+
   const colors: Record<string, string> = {
-    tcp: '#18a058',     
-    udp: '#2080f0',     
-    http: '#18a058',    
-    https: '#f0a020',   
-    stcp: '#d03050',    
-    sudp: '#f0a020',    
-    tcpmux: '#2080f0',  
-    xtcp: '#18a058',    
+    tcp: '#18a058',
+    udp: '#2080f0',
+    http: '#18a058',
+    https: '#f0a020',
+    stcp: '#d03050',
+    sudp: '#f0a020',
+    tcpmux: '#2080f0',
+    xtcp: '#18a058',
   }
-  
+
   return {
     text: firstChar,
-    color: colors[type] || '#18a058'
+    color: colors[type] || '#18a058',
+  }
+})
+
+const trafficChartOption = computed<EChartsOption>(() => {
+  const hasTraffic = chartData.value.some((item) => item.in > 0 || item.out > 0)
+  const yMax = maxTrafficValue.value > 0 ? maxTrafficValue.value : 102400
+
+  return {
+    color: ['#18a058', '#2080f0'],
+    animationDuration: 220,
+    grid: {
+      left: 16,
+      right: 16,
+      top: 16,
+      bottom: 44,
+      containLabel: true,
+    },
+    legend: {
+      show: false,
+    },
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: {
+        type: 'shadow',
+      },
+      formatter: (params: any) => {
+        const items = Array.isArray(params) ? params : [params]
+        const label = items[0]?.axisValue ?? ''
+        const lines = items.map((item) => {
+          const value = Number(item.data ?? 0)
+          const color = item.color as string
+          return `<div style="display:flex;align-items:center;gap:6px;margin-top:4px;">
+            <span style="width:10px;height:10px;border-radius:999px;background:${color};display:inline-block;"></span>
+            <span>${item.seriesName}：${formatFileSize(value)}</span>
+          </div>`
+        })
+
+        return `<div style="min-width:160px;">
+          <div>${label}</div>
+          ${lines.join('')}
+        </div>`
+      },
+    },
+    xAxis: {
+      type: 'category',
+      data: chartData.value.map((item) => item.date),
+      axisTick: { alignWithLabel: true },
+      axisLine: { lineStyle: { color: '#e0e0e0' } },
+      axisLabel: {
+        color: '#8c8c8c',
+        interval: 0,
+      },
+    },
+    yAxis: {
+      type: 'value',
+      max: yMax,
+      splitNumber: 4,
+      axisLabel: {
+        color: '#8c8c8c',
+        formatter: (value: number) => formatFileSize(value),
+      },
+      splitLine: {
+        lineStyle: {
+          color: '#f0f0f0',
+        },
+      },
+    },
+    series: [
+      {
+        name: '入站流量',
+        type: 'bar',
+        data: chartData.value.map((item) => item.in),
+        barWidth: 14,
+        itemStyle: {
+          borderRadius: [4, 4, 0, 0],
+        },
+      },
+      {
+        name: '出站流量',
+        type: 'bar',
+        data: chartData.value.map((item) => item.out),
+        barWidth: 14,
+        itemStyle: {
+          borderRadius: [4, 4, 0, 0],
+        },
+      },
+    ],
+    graphic: hasTraffic
+      ? []
+      : [
+          {
+            type: 'text',
+            left: 'center',
+            top: 'middle',
+            style: {
+              text: '暂无流量数据',
+              fill: '#8c8c8c',
+              fontSize: 14,
+            },
+          },
+        ],
   }
 })
 
@@ -372,15 +456,10 @@ const processTrafficData = (trafficIn: number[], trafficOut: number[]) => {
   maxTrafficValue.value = realMax > 0 ? realMax : 102400
 
   chartData.value = dates.map((date, i) => {
-    const inPercent = realMax > 0 ? (finalIn[i] / maxTrafficValue.value) * 100 : 0
-    const outPercent = realMax > 0 ? (finalOut[i] / maxTrafficValue.value) * 100 : 0
-    
     return {
       date,
       in: finalIn[i],
       out: finalOut[i],
-      inPercent,
-      outPercent,
     }
   })
 }
@@ -440,153 +519,3 @@ onMounted(() => {
   fetchTraffic()
 })
 </script>
-
-<style scoped>
-.proxy-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #ffffff !important;
-  flex-shrink: 0;
-  font-size: 26px;
-  font-weight: bold;
-}
-
-.proxy-name {
-  font-size: 20px;
-}
-
-.annotations-section {
-  margin-top: 16px;
-}
-
-.traffic-card {
-  width: 100%;
-}
-
-/* 图表外层网格 */
-.chart-grid {
-  position: relative;
-  display: grid;
-  grid-template-columns: 72px minmax(0, 1fr);
-  gap: 16px;
-  height: 320px; 
-  box-sizing: border-box;
-}
-
-/* Y 轴刻度文字容器 */
-.chart-axis {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 0 16px 28px 0; 
-  font-size: 12px;
-  color: #8c8c8c;
-  text-align: right;
-  box-sizing: border-box;
-}
-
-/* 显式 Y 轴纵向主线 */
-.main-axis-y {
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 28px;
-  width: 1px;
-  background-color: #e0e0e0;
-  z-index: 3;
-}
-
-/* 柱状图核心绘制区域（不包含底部日期） */
-.bars-area {
-  position: relative;
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  height: calc(100% - 28px); 
-  box-sizing: border-box;
-}
-
-/* 显式 X 轴横向主线 */
-.main-axis-x {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 1px;
-  background-color: #e0e0e0;
-  z-index: 3;
-}
-
-/* 内部背景网格参考线 */
-.grid-line {
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background-color: #f0f0f0;
-  pointer-events: none;
-  z-index: 0;
-}
-.grid-line.line-25 { top: 25%; }
-.grid-line.line-50 { top: 50%; }
-.grid-line.line-75 { top: 75%; }
-
-/* 单日柱状图列容器 */
-.day-column {
-  position: relative;
-  z-index: 1;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  height: 100%;
-}
-
-/* 双柱形组合 */
-.bars-group {
-  width: 60%;
-  height: 100%; 
-  display: flex;
-  align-items: flex-end;
-  gap: 6px;
-}
-
-/* 单个柱条基类 */
-.bar {
-  flex: 1;
-  border-radius: 4px 4px 0 0;
-  transition: height 0.3s ease;
-  z-index: 2;
-}
-
-.bar-in { background-color: #18a058; }
-.bar-out { background-color: #2080f0; }
-
-/* X 轴日期标签：绝对定位在每一列的最下方 */
-.date-label {
-  position: absolute;
-  top: 100%; 
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  text-align: center;
-  font-size: 12px;
-  color: #8c8c8c;
-  padding-top: 8px; 
-}
-
-.legend-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 999px;
-  display: inline-block;
-}
-
-.legend-dot.in { background-color: #18a058; }
-.legend-dot.out { background-color: #2080f0; }
-</style>

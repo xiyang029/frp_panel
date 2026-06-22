@@ -1,6 +1,6 @@
 <template>
   <DashboardShell
-    app-title="frpc 控制台"
+    app-title="frpc 客户端"
     app-subtitle="客户端代理、访客与配置管理"
     :menu-options="menuOptions"
     :menu-value="menuValue"

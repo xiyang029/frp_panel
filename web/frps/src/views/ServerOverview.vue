@@ -11,14 +11,14 @@
               <n-space vertical :size="4">
                 <n-space align="center" :size="6">
                   <n-icon :size="16" color="var(--n-success-color)">
-                    <ArrowDownOutline />
+                    <ArrowDown />
                   </n-icon>
                   <n-text strong>{{ item.inValue }}</n-text>
                   <n-text depth="3">入站</n-text>
                 </n-space>
                 <n-space align="center" :size="6">
                   <n-icon :size="16" color="var(--n-error-color)">
-                    <ArrowUpOutline />
+                    <ArrowUp />
                   </n-icon>
                   <n-text strong>{{ item.outValue }}</n-text>
                   <n-text depth="3">出站</n-text>
@@ -61,8 +61,8 @@
             <n-grid-item v-for="item in configItems" :key="item.label">
               <n-card size="small">
                 <n-space vertical :size="4">
-                  <n-text depth="3" class="config-label">{{ item.label }}</n-text>
-                  <n-text strong class="config-value">{{ item.value }}</n-text>
+              <n-text depth="3" style="font-size: 12px;">{{ item.label }}</n-text>
+              <n-text strong style="word-break: break-all;">{{ item.value }}</n-text>
                 </n-space>
               </n-card>
             </n-grid-item>
@@ -75,7 +75,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { ArrowDownOutline, ArrowUpOutline } from '@vicons/ionicons5'
+import { ArrowDown, ArrowUp } from '@vicons/tabler'
 import { NCard, NEmpty, NGrid, NGridItem, NIcon, NSpace, NStatistic, NTag, NText } from 'naive-ui'
 import { formatFileSize } from '../utils/format'
 import { createMessageHelpers } from '../naive'
@@ -163,16 +163,3 @@ const fetchData = async () => {
 fetchData()
 </script>
 
-<style scoped>
-.page-title {
-  font-size: 28px;
-}
-
-.config-label {
-  font-size: 12px;
-}
-
-.config-value {
-  word-break: break-all;
-}
-</style>

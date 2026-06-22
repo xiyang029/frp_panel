@@ -1,4 +1,5 @@
 const STORAGE_KEY = 'frps-dashboard-auth'
+const AUTH_PROBE_PATH = '/api/serverinfo'
 
 export interface DashboardAuth {
   username: string
@@ -41,4 +42,13 @@ export const buildBasicAuthHeader = (): string | null => {
     return null
   }
   return `Basic ${window.btoa(`${auth.username}:${auth.password}`)}`
+}
+
+// Detect whether the dashboard endpoint requires Basic Auth before showing the login page.
+export const probeDashboardAuthRequired = async (): Promise<boolean> => {
+  const response = await fetch(AUTH_PROBE_PATH, {
+    credentials: 'include',
+    method: 'GET',
+  })
+  return response.status === 401
 }

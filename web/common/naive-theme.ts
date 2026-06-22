@@ -6,9 +6,6 @@ export const dateLocale = dateZhCN
 
 export const themeOverrides: GlobalThemeOverrides = {
   common: {
-    primaryColor: '#1d4ed8',
-    primaryColorHover: '#1e40af',
-    primaryColorPressed: '#1e3a8a',
     borderRadius: '14px',
     borderRadiusSmall: '10px'
   },

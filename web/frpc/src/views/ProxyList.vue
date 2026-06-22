@@ -1,7 +1,7 @@
 <template>
   <n-space vertical :size="16">
     <n-space justify="space-between" align="center" :wrap="false">
-      <h2 style="margin: 0; line-height: 1;">代理列表</h2>
+      <n-text strong style="font-size: 28px;">代理列表</n-text>
 
       <n-button v-if="activeTab === 'store' && proxyStore.storeEnabled" type="primary" size="small"
         @click="handleCreate">
@@ -10,7 +10,7 @@
 
     </n-space>
 
-    <n-card size="small" segmented>
+    <n-card size="small" segmented :bordered="false">
       <n-space vertical :size="16">
         <n-tabs v-model:value="activeTab" type="line" @update:value="handleTabChange">
           <n-tab-pane name="status" tab="运行状态" />
@@ -28,7 +28,7 @@
           <n-grid responsive="screen" cols="1 m:3" :x-gap="12" :y-gap="12">
             <n-gi :span="1">
               <n-input v-model:value="searchText" placeholder="搜索代理名称、类型或地址" clearable>
-                <template #prefix><n-icon><search-outline /></n-icon></template>
+                <template #prefix><n-icon><Search /></n-icon></template>
               </n-input>
             </n-gi>
             <n-gi>
@@ -44,7 +44,7 @@
           <n-grid responsive="screen" cols="1 m:2" :x-gap="12" :y-gap="12">
             <n-gi>
               <n-input v-model:value="storeSearch" placeholder="搜索本地配置" clearable>
-                <template #prefix><n-icon><search-outline /></n-icon></template>
+                <template #prefix><n-icon><Search /></n-icon></template>
               </n-input>
             </n-gi>
             <n-gi>
@@ -102,7 +102,7 @@
 import { ref, computed, reactive, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { NButton, NCard, NEmpty, NGrid, NGi, NIcon, NInput, NModal, NSelect, NSpin, NSpace, NTabPane, NTabs, NTag, NText } from 'naive-ui'
-import { SearchOutline } from '@vicons/ionicons5'
+import { Search } from '@vicons/tabler'
 import ProxyCard from '../components/ProxyCard.vue'
 import { useProxyStore } from '../stores/proxy'
 import { useResponsive } from '../composables/useResponsive'

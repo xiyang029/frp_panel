@@ -1,7 +1,7 @@
 <template>
   <n-space vertical size="large">
     <n-space justify="space-between" align="center" wrap>
-      <n-text class="page-title" strong>代理列表</n-text>
+      <n-text strong style="font-size: 28px;">代理列表</n-text>
 
       <n-button type="error" secondary @click="showClearDialog = true">清理离线代理</n-button>
     </n-space>
@@ -11,7 +11,7 @@
         <n-input v-model:value="searchText" placeholder="搜索代理名称、客户端或地址" clearable>
           <template #prefix>
             <n-icon>
-              <SearchOutline />
+              <Search />
             </n-icon>
           </template>
         </n-input>
@@ -29,11 +29,15 @@
 
     <n-spin :show="loading">
       <n-space v-if="proxies.length > 0" vertical :size="16">
-        <router-link v-for="proxy in proxies" :key="`${proxy.type}:${proxy.name}`" :to="proxyLink(proxy.name)"
-          class="proxy-card-link">
-          <n-card size="small" hoverable class="proxy-card">
+        <router-link
+          v-for="proxy in proxies"
+          :key="`${proxy.type}:${proxy.name}`"
+          :to="proxyLink(proxy.name)"
+          style="display: block; text-decoration: none;"
+        >
+          <n-card size="small" hoverable :style="{ cursor: 'pointer' }">
             <n-space justify="space-between" align="start" wrap>
-              <n-space vertical :size="8" class="proxy-card-main">
+              <n-space vertical :size="8" :style="{ minWidth: '0' }">
                 <n-space align="center" :size="8" wrap>
                   <n-text strong>{{ proxy.name }}</n-text>
                   <n-tag v-if="activeType === 'all'" size="small" :bordered="false">
@@ -44,16 +48,31 @@
                   </n-tag>
                 </n-space>
 
-                <n-space :size="8" wrap>
-                  <n-text depth="3" v-if="proxy.port">端口 {{ proxy.port }}</n-text>
-                  <n-text depth="3">连接数 {{ proxy.conns }}</n-text>
-                  <n-text depth="3" v-if="proxy.clientID">
-                    客户端 {{ proxy.user ? `${proxy.user}.${proxy.clientID}` : proxy.clientID }}
-                  </n-text>
+                <n-space align="center" :size="16" wrap>
+                  <div v-if="proxy.port" style="display:inline-flex;align-items:center;gap:4px;">
+                    <n-icon size="16" depth="3">
+                      <Server />
+                    </n-icon>
+                    <n-text depth="3"> {{ proxy.port }}</n-text>
+                  </div>
+                  <div style="display:inline-flex;align-items:center;gap:4px;">
+                    <n-icon size="16" depth="3">
+                      <Link />
+                    </n-icon>
+                    <n-text depth="3"> {{ proxy.conns }}</n-text>
+                  </div>
+                  <div v-if="proxy.clientID" style="display:inline-flex;align-items:center;gap:4px;">
+                    <n-icon size="16" depth="3">
+                      <Users />
+                    </n-icon>
+                    <n-text depth="3">
+                      {{ proxy.user ? `${proxy.user}.${proxy.clientID}` : proxy.clientID }}
+                    </n-text>
+                  </div>
                 </n-space>
               </n-space>
 
-              <n-space vertical align="end" :size="4" class="proxy-card-traffic">
+              <n-space vertical align="end" :size="4" :style="{ flexShrink: 0 }">
                 <n-text depth="3">↑ {{ formatFileSize(proxy.trafficOut) }}</n-text>
                 <n-text depth="3">↓ {{ formatFileSize(proxy.trafficIn) }}</n-text>
               </n-space>
@@ -101,7 +120,7 @@ import {
   NText,
   NCard,
 } from 'naive-ui'
-import { SearchOutline } from '@vicons/ionicons5'
+import { Link, Search, Server, Users } from '@vicons/tabler'
 import {
   BaseProxy,
   TCPProxy,
@@ -395,25 +414,3 @@ fetchData()
 fetchClients()
 </script>
 
-<style scoped>
-.page-title {
-  font-size: 28px;
-}
-
-.proxy-card-link {
-  display: block;
-  text-decoration: none;
-}
-
-.proxy-card {
-  cursor: pointer;
-}
-
-.proxy-card-main {
-  min-width: 0;
-}
-
-.proxy-card-traffic {
-  flex-shrink: 0;
-}
-</style>

@@ -28,7 +28,7 @@
         >
           <n-button type="primary" secondary quaternary size="small">
             <template #icon>
-              <n-icon><ellipsis-horizontal /></n-icon>
+              <n-icon><Dots /></n-icon>
             </template>
           </n-button>
         </n-dropdown>
@@ -48,7 +48,7 @@
 <script setup lang="ts">
 import { computed, h } from 'vue'
 import { NButton, NCard, NDropdown, NIcon, NSpace, NTag, NText } from 'naive-ui'
-import { CreateOutline, EllipsisHorizontal, PauseOutline, PlayOutline, TrashOutline } from '@vicons/ionicons5'
+import { Dots, Edit, PlayerPause, PlayerPlay, Trash } from '@vicons/tabler'
 import type { ProxyStatus } from '../types'
 
 interface Props {
@@ -77,13 +77,13 @@ const renderActionIcon = (icon: any) => () =>
 // 下拉菜单选项根据代理启用状态提供互斥的启用或禁用动作。
 const actionOptions = computed(() => [
   props.proxy.status === 'disabled'
-    ? { label: '启用', key: 'enable', icon: renderActionIcon(PlayOutline) }
-    : { label: '禁用', key: 'disable', icon: renderActionIcon(PauseOutline) },
-  { label: '编辑', key: 'edit', icon: renderActionIcon(CreateOutline) },
+    ? { label: '启用', key: 'enable', icon: renderActionIcon(PlayerPlay) }
+    : { label: '禁用', key: 'disable', icon: renderActionIcon(PlayerPause) },
+  { label: '编辑', key: 'edit', icon: renderActionIcon(Edit) },
   {
     label: '删除',
     key: 'delete',
-    icon: renderActionIcon(TrashOutline),
+    icon: renderActionIcon(Trash),
   },
 ])
 

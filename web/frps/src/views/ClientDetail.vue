@@ -1,9 +1,9 @@
 <template>
   <n-space vertical size="large">
     <n-breadcrumb separator=">">
-      <n-breadcrumb-item>
-        <router-link to="/clients" class="breadcrumb-link">客户端列表</router-link>
-      </n-breadcrumb-item>
+        <n-breadcrumb-item>
+          <router-link to="/clients" style="text-decoration: none;">客户端列表</router-link>
+        </n-breadcrumb-item>
       <n-breadcrumb-item>{{ client?.displayName || route.params.key }}</n-breadcrumb-item>
     </n-breadcrumb>
 
@@ -18,7 +18,7 @@
                 </n-avatar>
                 <n-space vertical :size="6">
                   <n-space align="center" :size="8" :wrap="true">
-                    <n-text class="client-name" strong>{{ client.displayName }}</n-text>
+                <n-text strong style="font-size: 20px;">{{ client.displayName }}</n-text>
                     <n-tag v-if="client.version" size="small" type="success" round>
                       v{{ client.version }}
                     </n-tag>
@@ -42,8 +42,8 @@
               <n-grid-item v-for="item in infoItems" :key="item.label">
                 <n-card size="small">
                   <n-space vertical :size="4">
-                    <n-text depth="3" class="info-label">{{ item.label }}</n-text>
-                    <n-text strong class="info-value">{{ item.value }}</n-text>
+                    <n-text depth="3" style="font-size: 12px;">{{ item.label }}</n-text>
+                    <n-text strong style="word-break: break-all;">{{ item.value }}</n-text>
                   </n-space>
                 </n-card>
               </n-grid-item>
@@ -60,7 +60,7 @@
               </n-space>
               <n-input v-model:value="proxySearch" placeholder="搜索代理名称或类型" clearable>
                 <template #prefix>
-                  <n-icon><SearchOutline /></n-icon>
+                  <n-icon><Search /></n-icon>
                 </template>
               </n-input>
             </n-space>
@@ -72,11 +72,11 @@
                 v-for="proxy in filteredProxies"
                 :key="proxy.name"
                 :to="proxyLink(proxy.name)"
-                class="proxy-card-link"
+                style="display: block; text-decoration: none;"
               >
-                <n-card size="small" hoverable class="proxy-card">
+                <n-card size="small" hoverable :style="{ cursor: 'pointer' }">
                   <n-space justify="space-between" align="start" wrap>
-                    <n-space vertical :size="8" class="proxy-card-main">
+                    <n-space vertical :size="8" :style="{ minWidth: '0' }">
                       <n-space align="center" :size="8" wrap>
                         <n-text strong>{{ proxy.name }}</n-text>
                         <n-tag size="small" :bordered="false">
@@ -96,7 +96,7 @@
                       </n-space>
                     </n-space>
 
-                    <n-space vertical align="end" :size="4" class="proxy-card-traffic">
+                    <n-space vertical align="end" :size="4" :style="{ flexShrink: 0 }">
                       <n-text depth="3">↑ {{ formatFileSize(proxy.trafficOut) }}</n-text>
                       <n-text depth="3">↓ {{ formatFileSize(proxy.trafficIn) }}</n-text>
                     </n-space>
@@ -143,7 +143,7 @@ import {
   NTag,
   NText,
 } from 'naive-ui'
-import { SearchOutline } from '@vicons/ionicons5'
+import { Search } from '@vicons/tabler'
 import { Client } from '../utils/client'
 import { getClient } from '../api/client'
 import { getProxiesByType } from '../api/proxy'
@@ -284,33 +284,3 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
-.client-name {
-  font-size: 20px;
-}
-
-.info-label {
-  font-size: 12px;
-}
-
-.info-value {
-  word-break: break-all;
-}
-
-.proxy-card-link {
-  display: block;
-  text-decoration: none;
-}
-
-.proxy-card {
-  cursor: pointer;
-}
-
-.proxy-card-main {
-  min-width: 0;
-}
-
-.proxy-card-traffic {
-  flex-shrink: 0;
-}
-</style>

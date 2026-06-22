@@ -1,24 +1,21 @@
 <template>
   <n-space vertical :size="16">
     <n-space justify="space-between" align="center" :wrap="false">
-      <h2 style="margin: 0; line-height: 1;">访问器列表</h2>
+      <n-text strong style="font-size: 28px;">访问器列表</n-text>
 
       <n-button v-if="visitorStore.storeEnabled" type="primary" size="small" @click="handleCreate">
         + 新建访问器
       </n-button>
     </n-space>
 
-    <n-card size="small" segmented>
+    <n-card :bordered="false">
       <n-space vertical :size="16">
-        <n-space>
-          <n-tag :bordered="false" type="primary" checkable checked>本地配置</n-tag>
-        </n-space>
 
         <template v-if="visitorStore.storeEnabled">
           <n-grid responsive="screen" cols="1 m:2" :x-gap="12" :y-gap="12">
             <n-gi>
               <n-input v-model:value="searchText" placeholder="搜索访问器名称" clearable>
-                <template #prefix><n-icon><search-outline /></n-icon></template>
+                <template #prefix><n-icon><Search /></n-icon></template>
               </n-input>
             </n-gi>
             <n-gi>
@@ -53,7 +50,7 @@
                 @select="(key) => handleVisitorAction(key, v)">
                 <n-button type="primary" secondary quaternary size="small" @click.stop>
                   <template #icon>
-                    <n-icon><ellipsis-horizontal /></n-icon>
+                    <n-icon><Dots /></n-icon>
                   </template>
                 </n-button>
               </n-dropdown>
@@ -87,7 +84,7 @@
 import { ref, computed, reactive, onMounted, h } from 'vue'
 import { useRouter } from 'vue-router'
 import { NButton, NCard, NDropdown, NEmpty, NGrid, NGi, NIcon, NInput, NModal, NSelect, NSpin, NSpace, NTag, NText } from 'naive-ui'
-import { CreateOutline, EllipsisHorizontal, SearchOutline, TrashOutline } from '@vicons/ionicons5'
+import { Dots, Edit, Search, Trash } from '@vicons/tabler'
 import { useVisitorStore } from '../stores/visitor'
 import { useResponsive } from '../composables/useResponsive'
 import type { VisitorDefinition } from '../types'
@@ -127,11 +124,11 @@ const renderActionIcon = (icon: any) => () =>
   h(NIcon, null, { default: () => h(icon) })
 
 const visitorActionOptions = [
-  { label: '编辑', key: 'edit', icon: renderActionIcon(CreateOutline) },
+  { label: '编辑', key: 'edit', icon: renderActionIcon(Edit) },
   {
     label: '删除',
     key: 'delete',
-    icon: renderActionIcon(TrashOutline),
+    icon: renderActionIcon(Trash),
   },
 ]
 
