@@ -83,6 +83,10 @@ router.beforeEach(async (to) => {
     }
   }
 
+  if (to.name === 'Login' && hasDashboardAuth()) {
+    return { name: 'ProxyList' }
+  }
+
   if (!to.matched.some((record) => record.meta.requiresStore)) {
     return true
   }

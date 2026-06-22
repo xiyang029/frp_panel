@@ -54,15 +54,15 @@ const router = createRouter({
 })
 
 router.beforeEach((to) => {
+  if (to.name === 'Login' && hasDashboardAuth()) {
+    return { name: 'ServerOverview' }
+  }
+
   if (!to.meta.public && !hasDashboardAuth()) {
     return {
       name: 'Login',
       query: { next: encodeURIComponent(to.fullPath) },
     }
-  }
-
-  if (to.name === 'Login' && hasDashboardAuth()) {
-    return { name: 'ServerOverview' }
   }
 
   return true

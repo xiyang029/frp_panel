@@ -1,79 +1,99 @@
 <template>
-  <div class="clients-page">
-    <div class="page-header">
-      <div class="header-top">
-        <div class="title-section">
-          <h1 class="page-title">客户端列表</h1>
-          <p class="page-subtitle">查看已连接客户端及其在线状态。</p>
-        </div>
-        <div class="status-tabs">
-          <button
-            v-for="tab in statusTabs"
-            :key="tab.value"
-            class="status-tab"
-            :class="{ active: statusFilter === tab.value }"
-            @click="statusFilter = tab.value"
-          >
-            <span class="status-dot" :class="tab.value"></span>
-            <span class="tab-label">{{ tab.label }}</span>
-            <span v-if="tab.count !== null" class="tab-count">{{
-              tab.count
-            }}</span>
-          </button>
-        </div>
-      </div>
+  <n-space vertical size="large">
+    <n-space justify="space-between" align="center" wrap>
+      <n-text class="page-title" strong>客户端列表</n-text>
 
-      <div class="search-section">
-        <n-input
-          v-model:value="searchText"
-          placeholder="搜索客户端名称、用户或标识"
-          clearable
-          class="search-input"
-        >
-          <template #prefix>
-            <n-icon><search-outline /></n-icon>
-          </template>
-        </n-input>
-      </div>
-    </div>
+      <n-radio-group v-model:value="statusFilter" size="small">
+        <n-radio-button v-for="tab in statusTabs" :key="tab.value" :value="tab.value">
+          <n-space align="center" :size="6">
+            <span class="status-dot" :class="tab.value" />
+            <span>{{ tab.label }}</span>
+            <n-text v-if="tab.count !== null" depth="3">{{ tab.count }}</n-text>
+          </n-space>
+        </n-radio-button>
+      </n-radio-group>
+    </n-space>
 
-    <n-spin :show="loading" class="clients-content">
-      <div v-if="clients.length > 0" class="clients-list">
-        <ClientCard
-          v-for="client in clients"
-          :key="client.key"
-          :client="client"
-        />
-      </div>
-      <div v-else-if="!loading" class="empty-state">
-        <n-empty description="暂无客户端" />
-      </div>
+    <n-input v-model:value="searchText" placeholder="搜索客户端名称、用户或标识" clearable>
+      <template #prefix>
+        <n-icon>
+          <SearchOutline />
+        </n-icon>
+      </template>
+    </n-input>
+
+    <n-spin :show="loading">
+      <n-space v-if="clients.length > 0" vertical :size="16">
+        <n-card v-for="client in clients" :key="client.key" size="small" hoverable class="client-card"
+          @click="viewClientDetail(client.key)">
+          <n-space justify="space-between" align="start" wrap>
+            <n-space vertical :size="8" class="client-card-main">
+              <n-space align="center" :size="8" wrap>
+                <n-text strong>{{ client.displayName }}</n-text>
+                <n-tag v-if="client.version" size="small" type="success" round>
+                  v{{ client.version }}
+                </n-tag>
+                <n-tag v-if="client.wireProtocolLabel" size="small" type="info" round>
+                  {{ client.wireProtocolLabel }}
+                </n-tag>
+
+                <n-tag :type="client.online ? 'success' : 'default'" size="small" round>
+                  {{ client.online ? '在线' : '离线' }}
+                </n-tag>
+              </n-space>
+
+              <n-space :size="8" wrap>
+                <n-tag v-if="client.hostname" size="small" round>
+                  {{ client.hostname }}
+                </n-tag>
+                <n-tag v-if="client.ip" size="small" round>
+                  {{ client.ip }}
+                </n-tag>
+              </n-space>
+
+              <n-text depth="3" class="client-card-meta">
+                {{ client.online ? client.lastConnectedAgo : client.disconnectedAgo }}
+              </n-text>
+            </n-space>
+
+            <n-icon depth="3" :size="18" class="client-card-arrow">
+              <ChevronForwardOutline />
+            </n-icon>
+          </n-space>
+        </n-card>
+      </n-space>
+      <n-empty v-else description="暂无客户端" />
     </n-spin>
 
-    <div v-if="total > 0" class="pagination-section">
-      <n-pagination
-        :page="page"
-        :page-size="pageSize"
-        :page-sizes="[10, 20, 50, 100]"
-        :item-count="total"
-        show-size-picker
-        show-quick-jumper
-        @update:page="onPageChange"
-        @update:page-size="onPageSizeChange"
-      />
-    </div>
-  </div>
+    <n-space v-if="total > 0" justify="end">
+      <n-pagination :page="page" :page-size="pageSize" :page-sizes="[10, 20, 50, 100]" :item-count="total"
+        show-size-picker show-quick-jumper @update:page="onPageChange" @update:page-size="onPageSizeChange" />
+    </n-space>
+  </n-space>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { NEmpty, NIcon, NInput, NPagination, NSpin } from 'naive-ui'
-import { SearchOutline } from '@vicons/ionicons5'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
+import {
+  NCard,
+  NEmpty,
+  NIcon,
+  NInput,
+  NPagination,
+  NRadioButton,
+  NRadioGroup,
+  NSpace,
+  NSpin,
+  NTag,
+  NText,
+} from 'naive-ui'
+import { ChevronForwardOutline, SearchOutline } from '@vicons/ionicons5'
 import { Client } from '../utils/client'
-import ClientCard from '../components/ClientCard.vue'
 import { getClientsV2 } from '../api/client'
 import { createMessageHelpers } from '../naive'
 
+const router = useRouter()
 const clients = ref<Client[]>([])
 const loading = ref(false)
 const searchText = ref('')
@@ -162,6 +182,13 @@ const onPageSizeChange = (value: number) => {
   resetPageAndFetch()
 }
 
+const viewClientDetail = (key: string) => {
+  router.push({
+    name: 'ClientDetail',
+    params: { key },
+  })
+}
+
 const startAutoRefresh = () => {
   refreshTimer = window.setInterval(() => {
     fetchData(true)
@@ -200,147 +227,38 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.clients-page {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.page-header {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.header-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  gap: 20px;
-  flex-wrap: wrap;
-}
-
-.title-section {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
 .page-title {
   font-size: 28px;
-  font-weight: 600;
-  color: var(--app-text);
-  margin: 0;
-  line-height: 1.2;
 }
 
-.page-subtitle {
-  font-size: 14px;
-  color: var(--app-text-muted);
-  margin: 0;
-}
-
-.status-tabs {
-  display: flex;
-  gap: 12px;
-}
-
-.status-tab {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  border: 1px solid var(--app-border);
-  border-radius: 20px;
-  background: var(--app-panel-strong);
-  color: var(--app-text-muted);
-  font-size: 14px;
-  font-weight: 500;
+.client-card {
   cursor: pointer;
-  transition: all 0.2s;
 }
 
-.status-tab:hover {
-  border-color: var(--app-accent);
-  background: var(--app-panel);
+.client-card-main {
+  min-width: 0;
 }
 
-.status-tab.active {
-  background: var(--app-accent-soft);
-  border-color: var(--app-accent);
-  color: var(--app-text);
+.client-card-meta {
+  font-size: 13px;
+}
+
+.client-card-arrow {
+  flex-shrink: 0;
 }
 
 .status-dot {
   width: 8px;
   height: 8px;
-  border-radius: 50%;
-  background-color: var(--app-text-muted);
+  border-radius: 999px;
+  background: var(--n-text-color-3);
 }
 
 .status-dot.online {
-  background-color: #16a34a;
+  background: var(--n-success-color);
 }
 
 .status-dot.offline {
-  background-color: #94a3b8;
-}
-
-.status-dot.all {
-  background-color: var(--app-text);
-}
-
-.tab-count {
-  font-weight: 500;
-  opacity: 0.8;
-}
-
-.search-section {
-  width: 100%;
-}
-
-.search-input {
-  --n-height: 48px;
-  --n-border-radius: 12px;
-}
-
-.clients-content {
-  min-height: 200px;
-}
-
-.clients-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.empty-state {
-  padding: 60px 0;
-}
-
-.pagination-section {
-  display: flex;
-  justify-content: flex-end;
-}
-
-@media (max-width: 640px) {
-  .header-top {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .status-tabs {
-    width: 100%;
-    overflow-x: auto;
-    padding-bottom: 4px;
-  }
-
-  .status-tab {
-    flex-shrink: 0;
-  }
-
-  .pagination-section {
-    justify-content: center;
-  }
+  background: var(--n-text-color-3);
 }
 </style>

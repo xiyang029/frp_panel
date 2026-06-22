@@ -1,54 +1,82 @@
 <template>
-  <section class="overview-page">
-    <div class="page-header">
-      <div>
-        <h1 class="page-title">服务端总览</h1>
-        <p class="page-subtitle">查看当前 frps 运行指标与服务端运行参数。</p>
-      </div>
-      <n-button secondary @click="fetchData" :loading="loading">刷新</n-button>
-    </div>
+  <n-space vertical size="large">
+    <n-text class="page-title" strong>服务端总览</n-text>
 
-    <div class="stats-grid">
-      <n-card v-for="item in statsCards" :key="item.label" :bordered="false" class="stat-card">
-        <div class="stat-label">{{ item.label }}</div>
-        <div class="stat-value">{{ item.value }}</div>
-        <div class="stat-subtitle">{{ item.subtitle }}</div>
-      </n-card>
-    </div>
+    <n-grid responsive="screen" cols="1 s:2 m:4" :x-gap="16" :y-gap="16">
+      <n-grid-item v-for="item in statsCards" :key="item.label">
+        <n-card size="small">
+          <template v-if="item.kind === 'traffic'">
+            <n-space vertical :size="8">
+              <n-text depth="3">{{ item.label }}</n-text>
+              <n-space vertical :size="4">
+                <n-space align="center" :size="6">
+                  <n-icon :size="16" color="var(--n-success-color)">
+                    <ArrowDownOutline />
+                  </n-icon>
+                  <n-text strong>{{ item.inValue }}</n-text>
+                  <n-text depth="3">入站</n-text>
+                </n-space>
+                <n-space align="center" :size="6">
+                  <n-icon :size="16" color="var(--n-error-color)">
+                    <ArrowUpOutline />
+                  </n-icon>
+                  <n-text strong>{{ item.outValue }}</n-text>
+                  <n-text depth="3">出站</n-text>
+                </n-space>
+              </n-space>
+              <n-text depth="3">{{ item.subtitle }}</n-text>
+            </n-space>
+          </template>
+          <template v-else>
+            <n-statistic :label="item.label" :value="item.value" />
+            <n-text depth="3">{{ item.subtitle }}</n-text>
+          </template>
+        </n-card>
+      </n-grid-item>
+    </n-grid>
 
-    <div class="content-grid">
-      <n-card :bordered="false" class="panel-card">
-        <template #header>
-          <div class="panel-title">代理类型</div>
-        </template>
-        <div v-if="proxyTypeEntries.length" class="proxy-grid">
-          <div v-for="[type, count] in proxyTypeEntries" :key="type" class="proxy-pill">
-            <span>{{ type.toUpperCase() }}</span>
-            <strong>{{ count }}</strong>
-          </div>
-        </div>
-        <n-empty v-else description="暂无活跃代理" />
-      </n-card>
+    <n-grid responsive="screen" cols="1 m:2" :x-gap="16" :y-gap="16">
+      <n-grid-item>
+        <n-card>
+          <template #header>
+            <n-text strong>代理类型</n-text>
+          </template>
 
-      <n-card :bordered="false" class="panel-card">
-        <template #header>
-          <div class="panel-title">运行参数</div>
-        </template>
-        <div class="config-grid">
-          <div v-for="item in configItems" :key="item.label" class="config-item">
-            <span class="config-label">{{ item.label }}</span>
-            <span class="config-value">{{ item.value }}</span>
-          </div>
-        </div>
-      </n-card>
-    </div>
+          <n-empty v-if="proxyTypeEntries.length === 0" description="暂无活跃代理" />
+          <n-space v-else wrap :size="8">
+            <n-tag v-for="[type, count] in proxyTypeEntries" :key="type" round>
+              {{ type.toUpperCase() }} {{ count }}
+            </n-tag>
+          </n-space>
+        </n-card>
+      </n-grid-item>
 
-  </section>
+      <n-grid-item>
+        <n-card :bordered="false">
+          <template #header>
+            <n-text strong>运行参数</n-text>
+          </template>
+
+          <n-grid responsive="screen" cols="1 s:2" :x-gap="12" :y-gap="12">
+            <n-grid-item v-for="item in configItems" :key="item.label">
+              <n-card size="small">
+                <n-space vertical :size="4">
+                  <n-text depth="3" class="config-label">{{ item.label }}</n-text>
+                  <n-text strong class="config-value">{{ item.value }}</n-text>
+                </n-space>
+              </n-card>
+            </n-grid-item>
+          </n-grid>
+        </n-card>
+      </n-grid-item>
+    </n-grid>
+  </n-space>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { NButton, NCard, NEmpty } from 'naive-ui'
+import { ArrowDownOutline, ArrowUpOutline } from '@vicons/ionicons5'
+import { NCard, NEmpty, NGrid, NGridItem, NIcon, NSpace, NStatistic, NTag, NText } from 'naive-ui'
 import { formatFileSize } from '../utils/format'
 import { createMessageHelpers } from '../naive'
 import { getServerInfo } from '../api/server'
@@ -87,8 +115,9 @@ const statsCards = computed(() => [
   { label: '连接数', value: data.value.curConns, subtitle: '实时连接数' },
   {
     label: '今日流量',
-    value: formatFileSize(data.value.totalTrafficIn + data.value.totalTrafficOut),
-    subtitle: '入站 + 出站',
+    kind: 'traffic',
+    inValue: formatFileSize(data.value.totalTrafficIn),
+    outValue: formatFileSize(data.value.totalTrafficOut),
   },
 ])
 
@@ -135,122 +164,15 @@ fetchData()
 </script>
 
 <style scoped>
-.overview-page {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
-}
-
-.stat-card,
-.panel-card {
-  background: var(--app-panel);
-  backdrop-filter: blur(16px);
-  box-shadow: var(--app-shadow);
-}
-
-.stat-label {
-  font-size: 13px;
-  color: var(--app-text-muted);
-}
-
-.stat-value {
-  margin-top: 10px;
-  font-size: 30px;
-  font-weight: 800;
-  color: var(--app-text);
-}
-
-.stat-subtitle {
-  margin-top: 8px;
-  font-size: 13px;
-  color: var(--app-text-muted);
-}
-
-.content-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
-  gap: 16px;
-}
-
-.panel-title {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--app-text);
-}
-
-.proxy-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 12px;
-}
-
-.proxy-pill {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 14px;
-  border-radius: 14px;
-  background: var(--app-accent-soft);
-  color: var(--app-text);
-}
-
-.config-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 12px;
-}
-
-.config-item {
-  padding: 12px 14px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--app-border);
+.page-title {
+  font-size: 28px;
 }
 
 .config-label {
-  display: block;
   font-size: 12px;
-  color: var(--app-text-muted);
 }
 
 .config-value {
-  display: block;
-  margin-top: 6px;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--app-text);
   word-break: break-all;
-}
-
-@media (max-width: 1024px) {
-  .stats-grid,
-  .content-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 767px) {
-  .page-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .stats-grid,
-  .content-grid {
-    grid-template-columns: 1fr;
-  }
 }
 </style>

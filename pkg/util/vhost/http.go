@@ -272,10 +272,8 @@ func (rp *HTTPReverseProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 	rc := newreq.Context().Value(RouteConfigKey).(*RouteConfig)
 	if !checkRouteAuthByRequest(req, rc) {
 		if req.URL.Host != "" {
-			rw.Header().Set("Proxy-Authenticate", `Basic realm="Restricted"`)
 			http.Error(rw, http.StatusText(http.StatusProxyAuthRequired), http.StatusProxyAuthRequired)
 		} else {
-			rw.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
 			http.Error(rw, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 		}
 		return

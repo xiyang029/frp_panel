@@ -1,6 +1,7 @@
 // http.ts - Base HTTP client
 
 import { clearDashboardAuth, buildBasicAuthHeader } from '../utils/auth'
+import { openLoginModal } from '../composables/loginModal'
 
 class HTTPError extends Error {
   status: number
@@ -48,6 +49,8 @@ async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
         const next = encodeURIComponent(window.location.hash || '#/')
         window.location.hash = `#/login?next=${next}`
       }
+    } else if (response.status === 407) {
+      openLoginModal()
     }
     throw new HTTPError(
       response.status,
@@ -84,6 +87,8 @@ async function requestText(url: string, options: RequestInit = {}): Promise<stri
         const next = encodeURIComponent(window.location.hash || '#/')
         window.location.hash = `#/login?next=${next}`
       }
+    } else if (response.status === 407) {
+      openLoginModal()
     }
     throw new HTTPError(
       response.status,

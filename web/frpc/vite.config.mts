@@ -19,14 +19,6 @@ export default defineConfig({
       'node_modules',
     ],
   },
-  css: {
-    preprocessorOptions: {
-      scss: {
-        api: 'modern',
-        additionalData: `@use "@common/layout.scss" as *;`,
-      },
-    },
-  },
   build: {
     assetsDir: '',
     chunkSizeWarningLimit: 1000,

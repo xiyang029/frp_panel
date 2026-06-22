@@ -1,114 +1,106 @@
 <template>
-  <div class="proxies-page">
-    <div class="page-header">
-      <div class="header-top">
-        <div class="title-section">
-          <h1 class="page-title">代理列表</h1>
-          <p class="page-subtitle">查看并管理所有代理配置与运行状态。</p>
-        </div>
+  <n-space vertical size="large">
+    <n-space justify="space-between" align="center" wrap>
+      <n-text class="page-title" strong>代理列表</n-text>
 
-        <div class="actions-section">
-          <n-button type="primary" secondary quaternary size="small" @click="refreshData">
-            刷新
-          </n-button>
+      <n-button type="error" secondary @click="showClearDialog = true">清理离线代理</n-button>
+    </n-space>
 
-          <n-button type="error" secondary quaternary size="small" @click="showClearDialog = true">
-            清理离线代理
-          </n-button>
-        </div>
-      </div>
+    <n-space vertical :size="16">
+      <n-space wrap align="center">
+        <n-input v-model:value="searchText" placeholder="搜索代理名称、客户端或地址" clearable>
+          <template #prefix>
+            <n-icon>
+              <SearchOutline />
+            </n-icon>
+          </template>
+        </n-input>
 
-      <div class="filter-section">
-        <div class="search-row">
-          <n-input
-            v-model:value="searchText"
-            placeholder="搜索代理名称、客户端或地址"
-            clearable
-            class="main-search"
-          >
-            <template #prefix>
-              <n-icon><search-outline /></n-icon>
-            </template>
-          </n-input>
+        <n-select :value="selectedClientKey" :options="clientFilterOptions" filterable clearable placeholder="全部客户端"
+          @update:value="onClientFilterChange" />
+      </n-space>
 
-          <n-select
-            :value="selectedClientKey"
-            :options="clientFilterOptions"
-            filterable
-            clearable
-            class="client-filter"
-            placeholder="全部客户端"
-            @update:value="onClientFilterChange"
-          />
-        </div>
+      <n-radio-group v-model:value="activeType" size="small">
+        <n-radio-button v-for="t in proxyTypes" :key="t.value" :value="t.value">
+          {{ t.label }}
+        </n-radio-button>
+      </n-radio-group>
+    </n-space>
 
-        <div class="type-tabs">
-          <button
-            v-for="t in proxyTypes"
-            :key="t.value"
-            class="type-tab"
-            :class="{ active: activeType === t.value }"
-            @click="activeType = t.value"
-          >
-            {{ t.label }}
-          </button>
-        </div>
-      </div>
-    </div>
+    <n-spin :show="loading">
+      <n-space v-if="proxies.length > 0" vertical :size="16">
+        <router-link v-for="proxy in proxies" :key="`${proxy.type}:${proxy.name}`" :to="proxyLink(proxy.name)"
+          class="proxy-card-link">
+          <n-card size="small" hoverable class="proxy-card">
+            <n-space justify="space-between" align="start" wrap>
+              <n-space vertical :size="8" class="proxy-card-main">
+                <n-space align="center" :size="8" wrap>
+                  <n-text strong>{{ proxy.name }}</n-text>
+                  <n-tag v-if="activeType === 'all'" size="small" :bordered="false">
+                    {{ proxy.type.toUpperCase() }}
+                  </n-tag>
+                  <n-tag size="small" :type="proxy.status === 'online' ? 'success' : 'error'" :bordered="false">
+                    {{ proxy.status }}
+                  </n-tag>
+                </n-space>
 
-    <n-spin :show="loading" class="proxies-content">
-      <div v-if="proxies.length > 0" class="proxies-list">
-        <ProxyCard
-          v-for="proxy in proxies"
-          :key="`${proxy.type}:${proxy.name}`"
-          :proxy="proxy"
-          :show-type="activeType === 'all'"
-        />
-      </div>
-      <div v-else-if="!loading" class="empty-state">
-        <n-empty description="暂无代理" />
-      </div>
+                <n-space :size="8" wrap>
+                  <n-text depth="3" v-if="proxy.port">端口 {{ proxy.port }}</n-text>
+                  <n-text depth="3">连接数 {{ proxy.conns }}</n-text>
+                  <n-text depth="3" v-if="proxy.clientID">
+                    客户端 {{ proxy.user ? `${proxy.user}.${proxy.clientID}` : proxy.clientID }}
+                  </n-text>
+                </n-space>
+              </n-space>
+
+              <n-space vertical align="end" :size="4" class="proxy-card-traffic">
+                <n-text depth="3">↑ {{ formatFileSize(proxy.trafficOut) }}</n-text>
+                <n-text depth="3">↓ {{ formatFileSize(proxy.trafficIn) }}</n-text>
+              </n-space>
+            </n-space>
+          </n-card>
+        </router-link>
+      </n-space>
+      <n-empty v-else description="暂无代理" />
     </n-spin>
 
-    <div v-if="total > 0" class="pagination-section">
-      <n-pagination
-        :page="page"
-        :page-size="pageSize"
-        :page-sizes="[10, 20, 50, 100]"
-        :item-count="total"
-        show-size-picker
-        show-quick-jumper
-        @update:page="onPageChange"
-        @update:page-size="onPageSizeChange"
-      />
-    </div>
+    <n-space v-if="total > 0" justify="end">
+      <n-pagination :page="page" :page-size="pageSize" :page-sizes="[10, 20, 50, 100]" :item-count="total"
+        show-size-picker show-quick-jumper @update:page="onPageChange" @update:page-size="onPageSizeChange" />
+    </n-space>
 
-    <n-modal
-      v-model:show="showClearDialog"
-      preset="card"
-      title="清理离线代理"
-      :style="{ width: '400px', maxWidth: 'calc(100vw - 24px)' }"
-      :mask-closable="false"
-    >
-      <p class="confirm-message">确认清理所有离线代理吗？</p>
+    <n-modal v-model:show="showClearDialog" preset="card" title="清理离线代理"
+      :style="{ width: '400px', maxWidth: 'calc(100vw - 24px)' }" :mask-closable="false">
+      <n-text depth="3">确认清理所有离线代理吗？</n-text>
       <template #footer>
-        <div class="dialog-footer">
-          <n-button type="primary" secondary quaternary @click="showClearDialog = false">
-            取消
-          </n-button>
-          <n-button type="error" @click="handleClearConfirm">
-            清理
-          </n-button>
-        </div>
+        <n-space justify="end">
+          <n-button secondary @click="showClearDialog = false">取消</n-button>
+          <n-button type="error" @click="handleClearConfirm">清理</n-button>
+        </n-space>
       </template>
     </n-modal>
-  </div>
+  </n-space>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onUnmounted } from 'vue'
+import { computed, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { NButton, NEmpty, NIcon, NInput, NModal, NPagination, NSelect, NSpin } from 'naive-ui'
+import {
+  NButton,
+  NEmpty,
+  NIcon,
+  NInput,
+  NModal,
+  NPagination,
+  NRadioButton,
+  NRadioGroup,
+  NSelect,
+  NSpace,
+  NSpin,
+  NTag,
+  NText,
+  NCard,
+} from 'naive-ui'
 import { SearchOutline } from '@vicons/ionicons5'
 import {
   BaseProxy,
@@ -120,11 +112,8 @@ import {
   STCPProxy,
   SUDPProxy,
 } from '../utils/proxy'
-import ProxyCard from '../components/ProxyCard.vue'
-import {
-  getProxiesV2,
-  clearOfflineProxies as apiClearOfflineProxies,
-} from '../api/proxy'
+import { formatFileSize } from '../utils/format'
+import { getProxiesV2, clearOfflineProxies as apiClearOfflineProxies } from '../api/proxy'
 import { getServerInfo } from '../api/server'
 import { getClientsV2 } from '../api/client'
 import { Client } from '../utils/client'
@@ -173,7 +162,6 @@ const clientOptions = computed(() => {
     .sort((a, b) => a.label.localeCompare(b.label))
 })
 
-// Keep selected client visible even when it is not present in the current option list.
 const selectedClientKey = computed(() => {
   if (!clientIDFilter.value) return ''
   const client = clientOptions.value.find(
@@ -182,7 +170,6 @@ const selectedClientKey = computed(() => {
   return client?.key || `${userFilter.value}:${clientIDFilter.value}`
 })
 
-// Check if the filtered client exists in the client list
 const selectedClientInList = computed(() => {
   if (!clientIDFilter.value) return true
   return clientOptions.value.some(
@@ -198,10 +185,12 @@ const clientFilterOptions = computed(() => {
       value: selectedClientKey.value,
     })
   }
-  options.push(...clientOptions.value.map((client) => ({
-    label: client.label,
-    value: client.key,
-  })))
+  options.push(
+    ...clientOptions.value.map((client) => ({
+      label: client.label,
+      value: client.key,
+    })),
+  )
   return options
 })
 
@@ -240,14 +229,10 @@ const fetchClients = async () => {
 
     clients.value = allClients
   } catch (err) {
-    // Client dropdown is a non-critical side load; log for diagnostics
-    // but don't surface a toast (would compete with the main fetch error).
     console.warn('加载客户端筛选列表失败：', err)
   }
 }
 
-// Server info cache - cache the Promise itself so concurrent first calls
-// from Promise.all (convertProxies) don't kick off multiple HTTP requests.
 type ServerInfoLite = {
   vhostHTTPPort: number
   vhostHTTPSPort: number
@@ -259,7 +244,6 @@ let serverInfoPromise: Promise<ServerInfoLite> | null = null
 const fetchServerInfo = (): Promise<ServerInfoLite> => {
   if (!serverInfoPromise) {
     serverInfoPromise = getServerInfo().catch((err) => {
-      // Allow retry after failure
       serverInfoPromise = null
       throw err
     })
@@ -267,49 +251,26 @@ const fetchServerInfo = (): Promise<ServerInfoLite> => {
   return serverInfoPromise
 }
 
-const convertProxy = async (
-  proxy: ProxyStatsInfo,
-): Promise<BaseProxy | null> => {
+const convertProxy = async (proxy: ProxyStatsInfo): Promise<BaseProxy | null> => {
   const type = proxy.type || activeType.value
-  if (type === 'tcp') {
-    return new TCPProxy(proxy)
-  }
-  if (type === 'udp') {
-    return new UDPProxy(proxy)
-  }
+  if (type === 'tcp') return new TCPProxy(proxy)
+  if (type === 'udp') return new UDPProxy(proxy)
   if (type === 'http') {
     const info = await fetchServerInfo()
-    if (info && info.vhostHTTPPort) {
-      return new HTTPProxy(proxy, info.vhostHTTPPort, info.subdomainHost)
-    }
-    return null
+    return info && info.vhostHTTPPort ? new HTTPProxy(proxy, info.vhostHTTPPort, info.subdomainHost) : null
   }
   if (type === 'https') {
     const info = await fetchServerInfo()
-    if (info && info.vhostHTTPSPort) {
-      return new HTTPSProxy(proxy, info.vhostHTTPSPort, info.subdomainHost)
-    }
-    return null
+    return info && info.vhostHTTPSPort ? new HTTPSProxy(proxy, info.vhostHTTPSPort, info.subdomainHost) : null
   }
   if (type === 'tcpmux') {
     const info = await fetchServerInfo()
-    if (info && info.tcpmuxHTTPConnectPort) {
-      return new TCPMuxProxy(
-        proxy,
-        info.tcpmuxHTTPConnectPort,
-        info.subdomainHost,
-      )
-    }
-    return null
+    return info && info.tcpmuxHTTPConnectPort
+      ? new TCPMuxProxy(proxy, info.tcpmuxHTTPConnectPort, info.subdomainHost)
+      : null
   }
-  if (type === 'stcp') {
-    return new STCPProxy(proxy)
-  }
-  if (type === 'sudp') {
-    return new SUDPProxy(proxy)
-  }
-  // Fallback for types without a dedicated class (e.g. xtcp). Matches the
-  // pattern in ProxyDetail.vue so the type tag and meta render correctly.
+  if (type === 'stcp') return new STCPProxy(proxy)
+  if (type === 'sudp') return new SUDPProxy(proxy)
   const bp = new BaseProxy(proxy)
   bp.type = type
   return bp
@@ -373,10 +334,6 @@ const resetPageAndFetch = () => {
   fetchData()
 }
 
-const refreshData = () => {
-  fetchData()
-}
-
 const onPageChange = (value: number) => {
   clearSearchDebounce()
   page.value = value
@@ -387,6 +344,8 @@ const onPageSizeChange = (value: number) => {
   pageSize.value = value
   resetPageAndFetch()
 }
+
+const proxyLink = (name: string) => `/proxy/${name}`
 
 const handleClearConfirm = async () => {
   showClearDialog.value = false
@@ -403,11 +362,9 @@ const clearOfflineProxies = async () => {
   }
 }
 
-// Watch for type changes
 watch(activeType, (newType) => {
   clearSearchDebounce()
   page.value = 1
-  // Update route but preserve query params
   router.replace({ params: { type: newType }, query: route.query })
   fetchData()
 })
@@ -421,7 +378,6 @@ watch(searchText, () => {
   }, 300)
 })
 
-// Watch for route query changes (client filter)
 watch(
   () => [route.query.clientID, route.query.user],
   ([newClientID, newUser]) => {
@@ -435,158 +391,29 @@ onUnmounted(() => {
   clearSearchDebounce()
 })
 
-// Initial fetch
 fetchData()
 fetchClients()
 </script>
 
 <style scoped>
-.proxies-page {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.page-header {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.header-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 20px;
-}
-
-.title-section {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
 .page-title {
   font-size: 28px;
-  font-weight: 600;
-  color: var(--app-text);
-  margin: 0;
-  line-height: 1.2;
 }
 
-.page-subtitle {
-  font-size: 14px;
-  color: var(--app-text-muted);
-  margin: 0;
+.proxy-card-link {
+  display: block;
+  text-decoration: none;
 }
 
-.actions-section {
-  display: flex;
-  gap: 12px;
-}
-
-
-.filter-section {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  margin-top: 8px;
-}
-
-.search-row {
-  display: flex;
-  gap: 16px;
-  width: 100%;
-  align-items: center;
-}
-
-.main-search {
-  flex: 1;
-}
-
-.main-search,
-.client-filter {
-  --n-height: 40px;
-  --n-border-radius: 10px;
-}
-
-.client-filter {
-  width: 240px;
-}
-
-.confirm-message {
-  margin: 0;
-  font-size: 14px;
-  color: var(--app-text-muted);
-  line-height: 1.6;
-}
-
-.dialog-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-}
-
-.type-tabs {
-  display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  padding-bottom: 4px;
-}
-
-.type-tab {
-  padding: 6px 16px;
-  border: 1px solid var(--app-border);
-  border-radius: 12px;
-  background: var(--app-panel-strong);
-  color: var(--app-text-muted);
-  font-size: 13px;
-  font-weight: 500;
+.proxy-card {
   cursor: pointer;
-  transition: all 0.2s;
-  text-transform: uppercase;
 }
 
-.type-tab:hover {
-  background: var(--app-panel);
+.proxy-card-main {
+  min-width: 0;
 }
 
-.type-tab.active {
-  background: var(--app-accent-soft);
-  color: var(--app-text);
-  border-color: var(--app-accent);
-}
-
-.proxies-content {
-  min-height: 200px;
-}
-
-.proxies-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.empty-state {
-  padding: 60px 0;
-}
-
-.pagination-section {
-  display: flex;
-  justify-content: flex-end;
-}
-
-@media (max-width: 768px) {
-  .search-row {
-    flex-direction: column;
-  }
-
-  .client-filter {
-    width: 100%;
-  }
-
-  .pagination-section {
-    justify-content: center;
-  }
+.proxy-card-traffic {
+  flex-shrink: 0;
 }
 </style>

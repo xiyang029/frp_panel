@@ -1,102 +1,93 @@
 <template>
-  <div class="visitors-page">
-    <!-- Header -->
-    <div class="page-header">
-      <h2 class="page-title">访问器列表</h2>
-    </div>
+  <n-space vertical :size="16">
+    <n-space justify="space-between" align="center" :wrap="false">
+      <h2 style="margin: 0; line-height: 1;">访问器列表</h2>
 
-    <!-- Tab bar -->
-    <div class="tab-bar">
-      <div class="tab-buttons">
-        <button class="tab-btn active">本地配置</button>
-      </div>
-      <div class="tab-actions">
-        <n-button type="primary" secondary quaternary size="small" @click="fetchData">
-          <template #icon>
-            <n-icon><refresh-outline /></n-icon>
-          </template>
-        </n-button>
-        <n-button v-if="visitorStore.storeEnabled" type="primary" size="small" @click="handleCreate">
-          + 新建访问器
-        </n-button>
-      </div>
-    </div>
+      <n-button v-if="visitorStore.storeEnabled" type="primary" size="small" @click="handleCreate">
+        + 新建访问器
+      </n-button>
+    </n-space>
+
+    <n-card size="small" segmented>
+      <n-space vertical :size="16">
+        <n-space>
+          <n-tag :bordered="false" type="primary" checkable checked>本地配置</n-tag>
+        </n-space>
+
+        <template v-if="visitorStore.storeEnabled">
+          <n-grid responsive="screen" cols="1 m:2" :x-gap="12" :y-gap="12">
+            <n-gi>
+              <n-input v-model:value="searchText" placeholder="搜索访问器名称" clearable>
+                <template #prefix><n-icon><search-outline /></n-icon></template>
+              </n-input>
+            </n-gi>
+            <n-gi>
+              <n-select v-model:value="typeFilter" :options="typeFilterOptions" />
+            </n-gi>
+          </n-grid>
+        </template>
+      </n-space>
+    </n-card>
 
     <n-spin :show="visitorStore.loading">
-      <div v-if="!visitorStore.storeEnabled" class="store-disabled">
-        <p>本地持久化配置未启用，请在 frpc 配置中加入以下内容：</p>
-        <pre class="config-hint">[store]
-path = "./frpc_store.json"</pre>
-      </div>
+      <n-card v-if="!visitorStore.storeEnabled" size="small" title="本地持久化配置未启用">
+        <n-space vertical :size="12">
+          <n-text depth="3">请在 frpc 配置中加入以下内容：</n-text>
+          <n-card size="small" embedded>
+            <pre>[store]
+          path = "./frpc_store.json"</pre>
+          </n-card>
+        </n-space>
+      </n-card>
 
       <template v-else>
-        <div class="filter-bar">
-          <n-input v-model:value="searchText" placeholder="搜索访问器名称" clearable class="search-input">
-            <template #prefix><n-icon><search-outline /></n-icon></template>
-          </n-input>
-          <n-select v-model:value="typeFilter" :options="typeFilterOptions" class="filter-select" />
-        </div>
+        <n-space v-if="filteredVisitors.length > 0" vertical :size="12">
+          <n-card v-for="v in filteredVisitors" :key="v.name" size="small" hoverable @click="goToDetail(v.name)">
+            <template #header>
+              <n-space align="center" :size="8">
+                <span :style="{ fontWeight: 600 }">{{ v.name }}</span>
+                <n-tag size="small" :bordered="false">{{ v.type.toUpperCase() }}</n-tag>
+              </n-space>
+            </template>
+            <template #header-extra>
+              <n-dropdown trigger="click" placement="bottom-end" :options="visitorActionOptions"
+                @select="(key) => handleVisitorAction(key, v)">
+                <n-button type="primary" secondary quaternary size="small" @click.stop>
+                  <template #icon>
+                    <n-icon><ellipsis-horizontal /></n-icon>
+                  </template>
+                </n-button>
+              </n-dropdown>
+            </template>
 
-        <div v-if="filteredVisitors.length > 0" class="visitor-list">
-          <div v-for="v in filteredVisitors" :key="v.name" class="visitor-card" @click="goToDetail(v.name)">
-            <div class="card-left">
-              <div class="card-header">
-                <span class="visitor-name">{{ v.name }}</span>
-                <span class="type-tag">{{ v.type.toUpperCase() }}</span>
-              </div>
-              <div v-if="getServerName(v)" class="card-meta">{{ getServerName(v) }}</div>
-            </div>
-            <div class="card-right">
-              <div @click.stop>
-                <n-dropdown
-                  trigger="click"
-                  placement="bottom-end"
-                  :options="visitorActionOptions"
-                  @select="(key) => handleVisitorAction(key, v)"
-                >
-                  <n-button type="primary" secondary quaternary size="small">
-                    <template #icon>
-                      <n-icon><ellipsis-horizontal /></n-icon>
-                    </template>
-                  </n-button>
-                </n-dropdown>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div v-else class="empty-state">
-          <p class="empty-text">暂无访问器</p>
-          <p class="empty-hint">点击“新建访问器”即可创建。</p>
-        </div>
+            <n-text depth="3">{{ getServerName(v) || '未设置服务端代理' }}</n-text>
+          </n-card>
+        </n-space>
+        <n-empty v-else description="点击“新建访问器”即可创建。" />
       </template>
     </n-spin>
 
-    <n-modal
-      v-model:show="deleteDialog.visible"
-      preset="card"
-      title="删除访问器"
-      :style="{ width: isMobile ? 'calc(100vw - 24px)' : '400px' }"
-      :mask-closable="false"
-    >
-      <p class="confirm-message">{{ deleteDialog.message }}</p>
+    <n-modal v-model:show="deleteDialog.visible" preset="card" title="删除访问器"
+      :style="{ width: isMobile ? 'calc(100vw - 24px)' : '400px' }" :mask-closable="false">
+      <n-text depth="3">{{ deleteDialog.message }}</n-text>
       <template #footer>
-        <div class="dialog-footer">
+        <n-space justify="end">
           <n-button type="primary" secondary quaternary @click="deleteDialog.visible = false">
             取消
           </n-button>
           <n-button type="error" :loading="deleteDialog.loading" @click="doDelete">
             删除
           </n-button>
-        </div>
+        </n-space>
       </template>
     </n-modal>
-  </div>
+  </n-space>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, reactive, onMounted, h } from 'vue'
 import { useRouter } from 'vue-router'
-import { NButton, NDropdown, NIcon, NInput, NModal, NSelect, NSpin } from 'naive-ui'
+import { NButton, NCard, NDropdown, NEmpty, NGrid, NGi, NIcon, NInput, NModal, NSelect, NSpin, NSpace, NTag, NText } from 'naive-ui'
 import { CreateOutline, EllipsisHorizontal, RefreshOutline, SearchOutline, TrashOutline } from '@vicons/ionicons5'
 import { useVisitorStore } from '../stores/visitor'
 import { useResponsive } from '../composables/useResponsive'
@@ -140,7 +131,6 @@ const visitorActionOptions = [
     label: '删除',
     key: 'delete',
     icon: renderActionIcon(TrashOutline),
-    props: { class: 'danger-dropdown-option' },
   },
 ]
 
@@ -212,222 +202,3 @@ onMounted(() => {
   fetchData()
 })
 </script>
-
-<style scoped lang="scss">
-.visitors-page {
-  height: 100%;
-  overflow-y: auto;
-  max-width: 960px;
-  margin: 0 auto;
-}
-
-.page-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: $spacing-xl;
-}
-
-.tab-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom: 1px solid $color-border-lighter;
-  margin-bottom: $spacing-xl;
-}
-
-.tab-buttons {
-  display: flex;
-}
-
-.tab-btn {
-  background: none;
-  border: none;
-  padding: $spacing-sm $spacing-xl;
-  font-size: $font-size-md;
-  color: $color-text-muted;
-  cursor: pointer;
-  border-bottom: 2px solid transparent;
-  transition: all $transition-fast;
-
-  &:hover {
-    color: $color-text-primary;
-  }
-
-  &.active {
-    color: $color-text-primary;
-    border-bottom-color: $color-text-primary;
-    font-weight: $font-weight-medium;
-  }
-}
-
-.tab-actions {
-  display: flex;
-  align-items: center;
-  gap: $spacing-sm;
-}
-
-.filter-bar {
-  display: flex;
-  align-items: center;
-  gap: $spacing-sm;
-  margin-bottom: $spacing-xl;
-
-  :deep(.search-input) {
-    flex: 1;
-    min-width: 150px;
-  }
-}
-
-.filter-select {
-  width: 140px;
-}
-
-.visitor-list {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-md;
-}
-
-.visitor-card {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: $color-bg-primary;
-  border: 1px solid $color-border-lighter;
-  border-radius: $radius-md;
-  padding: 14px 20px;
-  cursor: pointer;
-  transition: all $transition-medium;
-
-  &:hover {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-    border-color: $color-border;
-  }
-}
-
-.card-left {
-  @include flex-column;
-  gap: $spacing-sm;
-  flex: 1;
-  min-width: 0;
-}
-
-.card-header {
-  display: flex;
-  align-items: center;
-  gap: $spacing-sm;
-}
-
-.visitor-name {
-  font-size: $font-size-lg;
-  font-weight: $font-weight-semibold;
-  color: $color-text-primary;
-}
-
-.type-tag {
-  font-size: $font-size-xs;
-  font-weight: $font-weight-medium;
-  padding: 2px 8px;
-  border-radius: 4px;
-  background: $color-bg-muted;
-  color: $color-text-secondary;
-}
-
-.card-meta {
-  font-size: $font-size-sm;
-  color: $color-text-muted;
-}
-
-.card-right {
-  display: flex;
-  align-items: center;
-  gap: $spacing-md;
-  flex-shrink: 0;
-}
-
-:global(.danger-dropdown-option) {
-  color: $color-danger;
-}
-
-.confirm-message {
-  margin: 0;
-  font-size: $font-size-md;
-  color: $color-text-secondary;
-  line-height: 1.6;
-}
-
-.dialog-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: $spacing-md;
-}
-
-.store-disabled {
-  padding: 32px;
-  text-align: center;
-  color: $color-text-muted;
-}
-
-.config-hint {
-  display: inline-block;
-  text-align: left;
-  background: $color-bg-hover;
-  padding: 12px 20px;
-  border-radius: $radius-sm;
-  font-size: $font-size-sm;
-  margin-top: $spacing-md;
-}
-
-.empty-state {
-  text-align: center;
-  padding: 60px $spacing-xl;
-}
-
-.empty-text {
-  font-size: $font-size-lg;
-  font-weight: $font-weight-medium;
-  color: $color-text-secondary;
-  margin: 0 0 $spacing-xs;
-}
-
-.empty-hint {
-  font-size: $font-size-sm;
-  color: $color-text-muted;
-  margin: 0;
-}
-
-@include mobile {
-  .visitors-page {
-    padding: $spacing-lg;
-  }
-
-  .page-header {
-    flex-direction: column;
-    align-items: stretch;
-    gap: $spacing-md;
-  }
-
-  .filter-bar {
-    flex-wrap: wrap;
-
-    :deep(.search-input) {
-      flex: 1 1 100%;
-    }
-  }
-
-  .filter-select {
-    width: 100%;
-  }
-
-  .visitor-card {
-    flex-direction: column;
-    align-items: stretch;
-    gap: $spacing-sm;
-  }
-
-  .card-right {
-    justify-content: flex-end;
-  }
-}
-</style>

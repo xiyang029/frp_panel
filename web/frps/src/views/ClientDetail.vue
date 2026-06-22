@@ -1,6 +1,5 @@
 <template>
-  <div class="client-detail-page">
-    <!-- Breadcrumb -->
+  <n-space vertical size="large">
     <n-breadcrumb separator=">">
       <n-breadcrumb-item>
         <router-link to="/clients" class="breadcrumb-link">客户端列表</router-link>
@@ -8,131 +7,143 @@
       <n-breadcrumb-item>{{ client?.displayName || route.params.key }}</n-breadcrumb-item>
     </n-breadcrumb>
 
-    <div v-loading="loading" class="detail-content">
-      <template v-if="client">
-        <!-- Header Card -->
-        <div class="header-card">
-          <div class="header-main">
-            <div class="header-left">
-              <div class="client-avatar">
-                {{ client.displayName.charAt(0).toUpperCase() }}
-              </div>
-              <div class="client-info">
-                <div class="client-name-row">
-                  <h1 class="client-name">{{ client.displayName }}</h1>
-                  <n-tag v-if="client.version" size="small" type="success" round>
-                    v{{ client.version }}
-                  </n-tag>
-                  <n-tag v-if="client.wireProtocolLabel" size="small" type="info" round>
-                    {{ client.wireProtocolLabel }}
-                  </n-tag>
-                </div>
-                <div class="client-meta">
-                  <span v-if="client.ip" class="meta-item">{{
-                    client.ip
-                  }}</span>
-                  <span v-if="client.hostname" class="meta-item">{{
-                    client.hostname
-                  }}</span>
-                </div>
-              </div>
-            </div>
-            <div class="header-right">
-              <span
-                class="status-badge"
-                :class="client.online ? 'online' : 'offline'"
-              >
+    <n-spin :show="loading">
+      <n-space v-if="client" vertical size="large">
+        <n-card :bordered="false">
+          <n-space vertical size="large">
+            <n-space justify="space-between" align="start" wrap>
+              <n-space align="center" :size="12" :wrap="false">
+                <n-avatar round :size="56">
+                  {{ client.displayName.charAt(0).toUpperCase() }}
+                </n-avatar>
+                <n-space vertical :size="6">
+                  <n-space align="center" :size="8" :wrap="true">
+                    <n-text class="client-name" strong>{{ client.displayName }}</n-text>
+                    <n-tag v-if="client.version" size="small" type="success" round>
+                      v{{ client.version }}
+                    </n-tag>
+                    <n-tag v-if="client.wireProtocolLabel" size="small" type="info" round>
+                      {{ client.wireProtocolLabel }}
+                    </n-tag>
+                  </n-space>
+                  <n-space :size="8" wrap>
+                    <n-text depth="3" v-if="client.ip">{{ client.ip }}</n-text>
+                    <n-text depth="3" v-if="client.hostname">{{ client.hostname }}</n-text>
+                  </n-space>
+                </n-space>
+              </n-space>
+
+              <n-tag :type="client.online ? 'success' : 'default'" round>
                 {{ client.online ? '在线' : '离线' }}
-              </span>
-            </div>
-          </div>
+              </n-tag>
+            </n-space>
 
-          <!-- Info Section -->
-          <div class="info-section">
-            <div class="info-item">
-              <span class="info-label">连接数</span>
-              <span class="info-value">{{ totalConnections }}</span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">Run ID</span>
-              <span class="info-value">{{ client.runID }}</span>
-            </div>
-            <div v-if="client.wireProtocol" class="info-item">
-              <span class="info-label">协议</span>
-              <span class="info-value">{{ client.wireProtocol }}</span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">首次连接</span>
-              <span class="info-value">{{ client.firstConnectedAgo }}</span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">{{
-                client.online ? '最近连接' : '最近断开'
-              }}</span>
-              <span class="info-value">{{
-                client.online ? client.lastConnectedAgo : client.disconnectedAgo
-              }}</span>
-            </div>
-          </div>
-        </div>
+            <n-grid responsive="screen" cols="1 s:2 m:5" :x-gap="12" :y-gap="12">
+              <n-grid-item v-for="item in infoItems" :key="item.label">
+                <n-card size="small">
+                  <n-space vertical :size="4">
+                    <n-text depth="3" class="info-label">{{ item.label }}</n-text>
+                    <n-text strong class="info-value">{{ item.value }}</n-text>
+                  </n-space>
+                </n-card>
+              </n-grid-item>
+            </n-grid>
+          </n-space>
+        </n-card>
 
-        <!-- Proxies Card -->
-        <div class="proxies-card">
-          <div class="proxies-header">
-            <div class="proxies-title">
-              <h2>代理列表</h2>
-              <span class="proxies-count">{{ filteredProxies.length }}</span>
-            </div>
-            <n-input
-              v-model:value="proxySearch"
-              placeholder="搜索代理名称或类型"
-              clearable
-              class="proxy-search"
-            >
-              <template #prefix>
-                <n-icon><search-outline /></n-icon>
-              </template>
-            </n-input>
-          </div>
-          <div class="proxies-body">
-            <div v-if="proxiesLoading" class="loading-state">
-              <n-spin size="small" />
-              <span>加载中...</span>
-            </div>
-            <div v-else-if="filteredProxies.length > 0" class="proxies-list">
-              <ProxyCard
+        <n-card :bordered="false">
+          <template #header>
+            <n-space justify="space-between" align="center">
+              <n-space align="center" :size="8">
+                <n-text strong>代理列表</n-text>
+                <n-tag round>{{ filteredProxies.length }}</n-tag>
+              </n-space>
+              <n-input v-model:value="proxySearch" placeholder="搜索代理名称或类型" clearable>
+                <template #prefix>
+                  <n-icon><SearchOutline /></n-icon>
+                </template>
+              </n-input>
+            </n-space>
+          </template>
+
+          <n-spin :show="proxiesLoading">
+            <n-space v-if="filteredProxies.length > 0" vertical :size="12">
+              <router-link
                 v-for="proxy in filteredProxies"
                 :key="proxy.name"
-                :proxy="proxy"
-                show-type
-              />
-            </div>
-            <div v-else-if="clientProxies.length > 0" class="empty-state">
-              <p>没有匹配“{{ proxySearch }}”的代理</p>
-            </div>
-            <div v-else class="empty-state">
-              <p>暂无代理</p>
-            </div>
-          </div>
-        </div>
-      </template>
+                :to="proxyLink(proxy.name)"
+                class="proxy-card-link"
+              >
+                <n-card size="small" hoverable class="proxy-card">
+                  <n-space justify="space-between" align="start" wrap>
+                    <n-space vertical :size="8" class="proxy-card-main">
+                      <n-space align="center" :size="8" wrap>
+                        <n-text strong>{{ proxy.name }}</n-text>
+                        <n-tag size="small" :bordered="false">
+                          {{ proxy.type.toUpperCase() }}
+                        </n-tag>
+                        <n-tag size="small" :type="proxy.status === 'online' ? 'success' : 'error'" :bordered="false">
+                          {{ proxy.status }}
+                        </n-tag>
+                      </n-space>
 
-      <div v-else-if="!loading" class="not-found">
-        <h2>未找到客户端</h2>
-        <p>该客户端不存在，或已被移除。</p>
-        <router-link to="/clients">
-          <n-button type="primary">返回客户端列表</n-button>
-        </router-link>
-      </div>
-    </div>
-  </div>
+                      <n-space :size="8" wrap>
+                        <n-text depth="3" v-if="proxy.port">端口: {{ proxy.port }}</n-text>
+                        <n-text depth="3">连接数: {{ proxy.conns }}</n-text>
+                        <n-text depth="3" v-if="proxy.clientID">
+                          客户端: {{ proxy.user ? `${proxy.user}.${proxy.clientID}` : proxy.clientID }}
+                        </n-text>
+                      </n-space>
+                    </n-space>
+
+                    <n-space vertical align="end" :size="4" class="proxy-card-traffic">
+                      <n-text depth="3">↑ {{ formatFileSize(proxy.trafficOut) }}</n-text>
+                      <n-text depth="3">↓ {{ formatFileSize(proxy.trafficIn) }}</n-text>
+                    </n-space>
+                  </n-space>
+                </n-card>
+              </router-link>
+            </n-space>
+            <n-empty
+              v-else-if="clientProxies.length > 0"
+              :description="`没有匹配“${proxySearch}”的代理`"
+            />
+            <n-empty v-else description="暂无代理" />
+          </n-spin>
+        </n-card>
+      </n-space>
+
+      <n-empty v-else description="该客户端不存在，或已被移除。">
+        <template #extra>
+          <n-button type="primary" size="small" @click="router.push('/clients')">
+            返回客户端列表
+          </n-button>
+        </template>
+      </n-empty>
+    </n-spin>
+  </n-space>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { NBreadcrumb, NBreadcrumbItem, NButton, NIcon, NInput, NSpin, NTag } from 'naive-ui'
-import { ArrowBackOutline, SearchOutline } from '@vicons/ionicons5'
+import {
+  NBreadcrumb,
+  NBreadcrumbItem,
+  NAvatar,
+  NButton,
+  NCard,
+  NEmpty,
+  NGrid,
+  NGridItem,
+  NIcon,
+  NInput,
+  NSpace,
+  NSpin,
+  NTag,
+  NText,
+} from 'naive-ui'
+import { SearchOutline } from '@vicons/ionicons5'
 import { Client } from '../utils/client'
 import { getClient } from '../api/client'
 import { getProxiesByType } from '../api/proxy'
@@ -147,7 +158,7 @@ import {
   SUDPProxy,
 } from '../utils/proxy'
 import { getServerInfo } from '../api/server'
-import ProxyCard from '../components/ProxyCard.vue'
+import { formatFileSize } from '../utils/format'
 import { createMessageHelpers } from '../naive'
 
 const route = useRoute()
@@ -155,14 +166,6 @@ const router = useRouter()
 const message = createMessageHelpers()
 const client = ref<Client | null>(null)
 const loading = ref(true)
-
-const goBack = () => {
-  if (window.history.length > 1) {
-    router.back()
-  } else {
-    router.push('/clients')
-  }
-}
 const proxiesLoading = ref(false)
 const allProxies = ref<BaseProxy[]>([])
 const proxySearch = ref('')
@@ -177,8 +180,7 @@ let serverInfo: {
 const clientProxies = computed(() => {
   if (!client.value) return []
   return allProxies.value.filter(
-    (p) =>
-      p.clientID === client.value!.clientID && p.user === client.value!.user,
+    (p) => p.clientID === client.value!.clientID && p.user === client.value!.user,
   )
 })
 
@@ -186,15 +188,31 @@ const filteredProxies = computed(() => {
   if (!proxySearch.value) return clientProxies.value
   const search = proxySearch.value.toLowerCase()
   return clientProxies.value.filter(
-    (p) =>
-      p.name.toLowerCase().includes(search) ||
-      p.type.toLowerCase().includes(search),
+    (p) => p.name.toLowerCase().includes(search) || p.type.toLowerCase().includes(search),
   )
 })
 
 const totalConnections = computed(() => {
   return clientProxies.value.reduce((sum, p) => sum + p.conns, 0)
 })
+
+const proxyLink = (name: string) => {
+  const base = `/proxy/${name}`
+  return route.name === 'ClientDetail' && route.params.key
+    ? `${base}?from=client&client=${route.params.key}`
+    : base
+}
+
+const infoItems = computed(() => [
+  { label: '连接数', value: totalConnections.value },
+  { label: 'Run ID', value: client.value?.runID || '-' },
+  { label: '协议', value: client.value?.wireProtocol || '-' },
+  { label: '首次连接', value: client.value?.firstConnectedAgo || '-' },
+  {
+    label: client.value?.online ? '最近连接' : '最近断开',
+    value: client.value?.online ? client.value?.lastConnectedAgo || '-' : client.value?.disconnectedAgo || '-',
+  },
+])
 
 const fetchServerInfo = async () => {
   if (serverInfo) return serverInfo
@@ -234,28 +252,13 @@ const fetchProxies = async () => {
         } else if (type === 'udp') {
           proxies.push(...json.proxies.map((p: any) => new UDPProxy(p)))
         } else if (type === 'http' && info?.vhostHTTPPort) {
-          proxies.push(
-            ...json.proxies.map(
-              (p: any) =>
-                new HTTPProxy(p, info.vhostHTTPPort, info.subdomainHost),
-            ),
-          )
+          proxies.push(...json.proxies.map((p: any) => new HTTPProxy(p, info.vhostHTTPPort, info.subdomainHost)))
         } else if (type === 'https' && info?.vhostHTTPSPort) {
-          proxies.push(
-            ...json.proxies.map(
-              (p: any) =>
-                new HTTPSProxy(p, info.vhostHTTPSPort, info.subdomainHost),
-            ),
-          )
+          proxies.push(...json.proxies.map((p: any) => new HTTPSProxy(p, info.vhostHTTPSPort, info.subdomainHost)))
         } else if (type === 'tcpmux' && info?.tcpmuxHTTPConnectPort) {
           proxies.push(
             ...json.proxies.map(
-              (p: any) =>
-                new TCPMuxProxy(
-                  p,
-                  info.tcpmuxHTTPConnectPort,
-                  info.subdomainHost,
-                ),
+              (p: any) => new TCPMuxProxy(p, info.tcpmuxHTTPConnectPort, info.subdomainHost),
             ),
           )
         } else if (type === 'stcp') {
@@ -282,237 +285,32 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.client-detail-page {
-}
-
-.n-breadcrumb {
-  margin-bottom: 24px;
-}
-
-.breadcrumb-link {
-  display: inline-flex;
-  align-items: center;
-  color: var(--app-text-muted);
-  transition: color 0.2s;
-  text-decoration: none;
-}
-
-.breadcrumb-link:hover {
-  color: var(--app-text);
-}
-
-.breadcrumb-link.is-button {
-  cursor: pointer;
-}
-
-/* Card Base */
-.header-card,
-.proxies-card {
-  background: var(--app-panel-strong);
-  border: 1px solid var(--app-border);
-  border-radius: 12px;
-  margin-bottom: 16px;
-}
-
-/* Header Card */
-.header-main {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  padding: 24px;
-}
-
-.header-left {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-}
-
-.client-avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  font-weight: 500;
-  flex-shrink: 0;
-}
-
-.client-info {
-  min-width: 0;
-}
-
-.client-name-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 4px;
-}
-
 .client-name {
   font-size: 20px;
-  font-weight: 500;
-  color: var(--text-primary);
-  margin: 0;
-  line-height: 1.3;
-}
-
-.client-meta {
-  display: flex;
-  gap: 12px;
-  font-size: 14px;
-  color: var(--text-secondary);
-}
-
-.status-badge {
-  padding: 6px 12px;
-  border-radius: 6px;
-  font-size: 13px;
-  font-weight: 500;
-}
-
-.status-badge.online {
-  background: rgba(34, 197, 94, 0.1);
-  color: #16a34a;
-}
-
-.status-badge.offline {
-  background: var(--hover-bg);
-  color: var(--text-secondary);
-}
-
-html.dark .status-badge.online {
-  background: rgba(34, 197, 94, 0.15);
-  color: #4ade80;
-}
-
-/* Info Section */
-.info-section {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px 32px;
-  padding: 16px 24px;
-}
-
-.info-item {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
 }
 
 .info-label {
-  font-size: 13px;
-  color: var(--text-secondary);
-}
-
-.info-label::after {
-  content: ':';
+  font-size: 12px;
 }
 
 .info-value {
-  font-size: 13px;
-  color: var(--text-primary);
-  font-weight: 500;
   word-break: break-all;
 }
 
-/* Proxies Card */
-.proxies-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 20px;
-  gap: 16px;
+.proxy-card-link {
+  display: block;
+  text-decoration: none;
 }
 
-.proxies-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.proxy-card {
+  cursor: pointer;
 }
 
-.proxies-title h2 {
-  font-size: 15px;
-  font-weight: 500;
-  color: var(--text-primary);
-  margin: 0;
+.proxy-card-main {
+  min-width: 0;
 }
 
-.proxies-count {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-secondary);
-  background: var(--hover-bg);
-  padding: 4px 10px;
-  border-radius: 6px;
-}
-
-.proxy-search {
-  width: 200px;
-  --n-border-radius: 8px;
-}
-
-.proxies-body {
-  padding: 16px;
-}
-
-.proxies-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.loading-state {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 40px;
-  color: var(--text-secondary);
-}
-
-.empty-state {
-  text-align: center;
-  padding: 40px;
-  color: var(--text-secondary);
-}
-
-.empty-state p {
-  margin: 0;
-}
-
-/* Not Found */
-.not-found {
-  text-align: center;
-  padding: 60px 20px;
-}
-
-.not-found h2 {
-  font-size: 18px;
-  font-weight: 500;
-  color: var(--text-primary);
-  margin: 0 0 8px;
-}
-
-.not-found p {
-  font-size: 14px;
-  color: var(--text-secondary);
-  margin: 0 0 20px;
-}
-
-/* Responsive */
-@media (max-width: 640px) {
-  .header-main {
-    flex-direction: column;
-    gap: 16px;
-  }
-
-  .header-right {
-    align-self: flex-start;
-  }
+.proxy-card-traffic {
+  flex-shrink: 0;
 }
 </style>

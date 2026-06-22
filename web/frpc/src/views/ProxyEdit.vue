@@ -1,28 +1,27 @@
 <template>
-  <div class="proxy-edit-page">
-    <!-- Header with breadcrumb and actions -->
-    <div class="edit-header">
+  <n-space vertical :size="16">
+    <n-space justify="space-between" align="start" :wrap="false">
       <n-breadcrumb separator=">">
         <n-breadcrumb-item>
-          <router-link to="/proxies?tab=store" class="breadcrumb-link">代理列表</router-link>
+          <router-link to="/proxies?tab=store">代理列表</router-link>
         </n-breadcrumb-item>
         <n-breadcrumb-item>{{ isEditing ? '编辑代理' : '新建代理' }}</n-breadcrumb-item>
       </n-breadcrumb>
-      <div class="header-actions">
-        <n-button type="primary" secondary quaternary size="small" @click="goBack">取消</n-button>
+      <n-space>
+        <n-button type="primary" secondary size="small" @click="goBack">取消</n-button>
         <n-button type="primary" size="small" :loading="saving" @click="handleSave">
           {{ isEditing ? '保存修改' : '创建代理' }}
         </n-button>
-      </div>
-    </div>
+      </n-space>
+    </n-space>
 
-    <div>
-      <n-spin :show="pageLoading">
+    <n-spin :show="pageLoading">
+      <n-card size="small">
         <n-form ref="formRef" :model="form" :rules="rules" label-placement="top" @submit.prevent>
           <ProxyFormLayout v-model="form" :editing="isEditing" />
         </n-form>
-      </n-spin>
-    </div>
+      </n-card>
+    </n-spin>
 
     <n-modal
       v-model:show="leaveDialogVisible"
@@ -31,25 +30,21 @@
       :style="{ width: isMobile ? 'calc(100vw - 24px)' : '400px' }"
       :mask-closable="false"
     >
-      <p class="confirm-message">当前内容尚未保存，确认离开当前页面吗？</p>
+      <n-text depth="3">当前内容尚未保存，确认离开当前页面吗？</n-text>
       <template #footer>
-        <div class="dialog-footer">
-          <n-button type="primary" secondary quaternary @click="handleLeaveCancel">
-            取消
-          </n-button>
-          <n-button type="primary" @click="handleLeaveConfirm">
-            确认
-          </n-button>
-        </div>
+        <n-space justify="end">
+          <n-button type="primary" secondary @click="handleLeaveCancel">取消</n-button>
+          <n-button type="primary" @click="handleLeaveConfirm">确认</n-button>
+        </n-space>
       </template>
     </n-modal>
-  </div>
+  </n-space>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router'
-import { NBreadcrumb, NBreadcrumbItem, NButton, NForm, NModal, NSpin, type FormInst, type FormRules } from 'naive-ui'
+import { NBreadcrumb, NBreadcrumbItem, NButton, NCard, NForm, NModal, NSpin, NSpace, NText, type FormInst, type FormRules } from 'naive-ui'
 import {
   type ProxyFormData,
   createDefaultProxyForm,
@@ -88,6 +83,17 @@ const rules: FormRules = {
       validator: (_rule, value) => {
         if (!form.value.pluginType && value == null) {
           return new Error('请输入本地端口')
+        }
+        return undefined
+      },
+      trigger: 'blur',
+    },
+  ],
+  remotePort: [
+    {
+      validator: (_rule, value) => {
+        if (['tcp', 'udp'].includes(form.value.type) && value == null) {
+          return new Error('请输入远程端口')
         }
         return undefined
       },
@@ -234,62 +240,3 @@ watch(
   },
 )
 </script>
-
-<style scoped lang="scss">
-.proxy-edit-page {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  max-width: 960px;
-  margin: 0 auto;
-}
-
-/* Edit Header */
-.edit-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-shrink: 0;
-  padding: $spacing-xl 24px;
-}
-
-.header-actions {
-  display: flex;
-  gap: $spacing-sm;
-}
-
-.confirm-message {
-  margin: 0;
-  font-size: $font-size-md;
-  color: $color-text-secondary;
-  line-height: 1.6;
-}
-
-.dialog-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: $spacing-md;
-}
-
-.n-breadcrumb {
-  min-width: 0;
-}
-
-.breadcrumb-link {
-  color: var(--app-text-muted);
-  text-decoration: none;
-  transition: color 0.2s;
-}
-
-.breadcrumb-link:hover {
-  color: var(--app-accent);
-}
-
-/* Responsive */
-@include mobile {
-  .edit-header {
-    padding: $spacing-lg;
-  }
-
-}
-</style>

@@ -53,7 +53,6 @@ func (authMid *HTTPAuthMiddleware) Middleware(next http.Handler) http.Handler {
 			if authMid.authFailDelay > 0 {
 				time.Sleep(authMid.authFailDelay)
 			}
-			w.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
 			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 		}
 	})

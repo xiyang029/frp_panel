@@ -1,23 +1,21 @@
 <template>
   <n-card
-    class="proxy-card"
-    :class="{ 'has-error': proxy.err }"
     size="small"
     hoverable
     @click="emit('click', proxy)"
   >
     <template #header>
-      <div class="card-header">
-        <span class="proxy-name">{{ proxy.name }}</span>
+      <n-space align="center" :size="8" :wrap="true">
+        <n-text strong>{{ proxy.name }}</n-text>
         <n-tag size="small" :bordered="false">{{ proxy.type.toUpperCase() }}</n-tag>
         <n-tag size="small" :type="statusTagType" :bordered="false">
           {{ proxy.status }}
         </n-tag>
-      </div>
+      </n-space>
     </template>
 
     <template v-if="showSource || showActions" #header-extra>
-      <div class="card-extra" @click.stop>
+      <n-space align="center" :size="8" @click.stop>
         <n-tag v-if="showSource" size="small" :bordered="false">
           {{ displaySource }}
         </n-tag>
@@ -34,22 +32,22 @@
             </template>
           </n-button>
         </n-dropdown>
-      </div>
+      </n-space>
     </template>
 
-    <div class="card-address">
+    <n-text depth="3">
       <template v-if="proxy.remote_addr && localDisplay">
         {{ proxy.remote_addr }} → {{ localDisplay }}
       </template>
       <template v-else-if="proxy.remote_addr">{{ proxy.remote_addr }}</template>
       <template v-else-if="localDisplay">{{ localDisplay }}</template>
-    </div>
+    </n-text>
   </n-card>
 </template>
 
 <script setup lang="ts">
 import { computed, h } from 'vue'
-import { NButton, NCard, NDropdown, NIcon, NTag } from 'naive-ui'
+import { NButton, NCard, NDropdown, NIcon, NSpace, NTag, NText } from 'naive-ui'
 import { CreateOutline, EllipsisHorizontal, PauseOutline, PlayOutline, TrashOutline } from '@vicons/ionicons5'
 import type { ProxyStatus } from '../types'
 
@@ -86,7 +84,6 @@ const actionOptions = computed(() => [
     label: '删除',
     key: 'delete',
     icon: renderActionIcon(TrashOutline),
-    props: { class: 'danger-dropdown-option' },
   },
 ])
 
@@ -128,62 +125,3 @@ const statusTagType = computed<'default' | 'success' | 'error' | 'warning'>(() =
   }
 })
 </script>
-
-<style scoped lang="scss">
-.proxy-card {
-  cursor: pointer;
-  transition: all $transition-medium;
-
-  &:hover {
-    border-color: $color-border;
-  }
-
-  &.has-error {
-    border-color: rgba(245, 108, 108, 0.3);
-  }
-}
-
-.card-header {
-  display: flex;
-  align-items: center;
-  gap: $spacing-sm;
-  flex-wrap: wrap;
-  min-width: 0;
-}
-
-.proxy-name {
-  font-size: $font-size-lg;
-  font-weight: $font-weight-semibold;
-  color: $color-text-primary;
-}
-
-.card-address {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: $font-size-sm;
-  color: $color-text-muted;
-  display: flex;
-  align-items: center;
-  gap: $spacing-sm;
-}
-
-.card-extra {
-  display: flex;
-  align-items: center;
-  gap: $spacing-sm;
-}
-
-:global(.danger-dropdown-option) {
-  color: $color-danger;
-}
-
-@include mobile {
-  .card-header,
-  .card-extra {
-    align-items: flex-start;
-  }
-
-  .card-address {
-    word-break: break-all;
-  }
-}
-</style>
