@@ -34,8 +34,7 @@
         <n-space vertical :size="12">
           <n-text depth="3">请在 frpc 配置中加入以下内容：</n-text>
           <n-card size="small" embedded>
-            <pre>[store]
-          path = "./frpc_store.json"</pre>
+            <pre v-text="configText"></pre>
           </n-card>
         </n-space>
       </n-card>
@@ -101,6 +100,8 @@ const message = createMessageHelpers()
 
 const searchText = ref('')
 const typeFilter = ref('')
+
+const configText = `[store]\npath = "./frpc_store.json"`;
 
 const deleteDialog = reactive({
   visible: false,

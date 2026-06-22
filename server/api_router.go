@@ -27,8 +27,18 @@ import (
 
 func (svr *Service) registerRouteHandlers(helper *httppkg.RouterRegisterHelper) {
 	helper.Router.HandleFunc("/healthz", healthz)
-	subRouter := helper.Router.NewRoute().Subrouter()
+	apiController := adminapi.NewController(svr.cfg, svr.clientRegistry, svr.pxyManager)
 
+	publicRouter := helper.Router.NewRoute().Subrouter()
+	publicRouter.Handle("/favicon.ico", http.FileServer(helper.AssetsFS)).Methods("GET")
+	publicRouter.PathPrefix("/static/").Handler(
+		netpkg.MakeHTTPGzipHandler(http.StripPrefix("/static/", http.FileServer(helper.AssetsFS))),
+	).Methods("GET")
+	publicRouter.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/static/", http.StatusMovedPermanently)
+	})
+
+	subRouter := helper.Router.NewRoute().Subrouter()
 	subRouter.Use(helper.AuthMiddleware)
 	subRouter.Use(httppkg.NewRequestLogger)
 
@@ -36,8 +46,6 @@ func (svr *Service) registerRouteHandlers(helper *httppkg.RouterRegisterHelper) 
 	if svr.cfg.EnablePrometheus {
 		subRouter.Handle("/metrics", promhttp.Handler())
 	}
-
-	apiController := adminapi.NewController(svr.cfg, svr.clientRegistry, svr.pxyManager)
 
 	// apis
 	subRouter.HandleFunc("/api/serverinfo", httppkg.MakeHTTPHandlerFunc(apiController.APIServerInfo)).Methods("GET")
@@ -72,16 +80,6 @@ func (svr *Service) registerRouteHandlers(helper *httppkg.RouterRegisterHelper) 
 	subRouter.HandleFunc("/api/v2/clients/{key}", httppkg.MakeHTTPHandlerFuncV2(apiController.APIV2ClientDetail)).Methods("GET")
 	subRouter.HandleFunc("/api/v2/proxies", httppkg.MakeHTTPHandlerFuncV2(apiController.APIV2ProxyList)).Methods("GET")
 	subRouter.HandleFunc("/api/v2/proxies/{name}", httppkg.MakeHTTPHandlerFuncV2(apiController.APIV2ProxyDetail)).Methods("GET")
-
-	// view
-	subRouter.Handle("/favicon.ico", http.FileServer(helper.AssetsFS)).Methods("GET")
-	subRouter.PathPrefix("/static/").Handler(
-		netpkg.MakeHTTPGzipHandler(http.StripPrefix("/static/", http.FileServer(helper.AssetsFS))),
-	).Methods("GET")
-
-	subRouter.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, "/static/", http.StatusMovedPermanently)
-	})
 }
 
 func healthz(w http.ResponseWriter, _ *http.Request) {

@@ -67,8 +67,7 @@
         <n-space vertical :size="12">
           <n-text depth="3">请在 frpc 配置中加入以下内容：</n-text>
           <n-card size="small" embedded>
-            <pre>[store]
-          path = "./frpc_store.json"</pre>
+            <pre v-text="configText"></pre>
           </n-card>
         </n-space>
       </n-card>
@@ -140,6 +139,8 @@ const deleteDialog = reactive({
 const displaySource = (proxy: ProxyStatus): string => {
   return proxy.source === 'store' ? '本地存储' : '配置文件'
 }
+
+const configText = `[store]\npath = "./frpc_store.json"`;
 
 const sourceOptions = computed(() => {
   const sources = new Set<string>()

@@ -220,12 +220,15 @@
                   <span>{{ formatFileSize(maxTrafficValue) }}</span>
                   <span>{{ formatFileSize(maxTrafficValue / 2) }}</span>
                   <span>0</span>
+                  <div class="main-axis-y" />
                 </div>
 
                 <div class="bars-area">
-                  <div class="grid-line top" />
-                  <div class="grid-line middle" />
-                  <div class="grid-line bottom" />
+                  <div class="grid-line line-25" />
+                  <div class="grid-line line-50" />
+                  <div class="grid-line line-75" />
+                  
+                  <div class="main-axis-x" />
 
                   <div v-for="(item, index) in chartData" :key="index" class="day-column">
                     <div class="bars-group">
@@ -322,7 +325,6 @@ const clientLink = computed(() => {
   return `/clients/${key}`
 })
 
-// 修复：添加确切的十六进制色值，解决在白底卡片或 CSS 变量未渲染完整时的隐形 Bug
 const proxyIconConfig = computed(() => {
   const type = proxy.value?.type?.toLowerCase() || 'tcp'
   const firstChar = type.charAt(0).toUpperCase()
@@ -367,11 +369,9 @@ const processTrafficData = (trafficIn: number[], trafficOut: number[]) => {
   const maxOut = Math.max(...finalOut)
   const realMax = Math.max(maxIn, maxOut)
 
-  // 修复：当零流量时分配一个虚拟的 100 KB 基准轴（102400 B），防止纵坐标被挤压成一排 0 B
   maxTrafficValue.value = realMax > 0 ? realMax : 102400
 
   chartData.value = dates.map((date, i) => {
-    // 修复：当没有实际流量时，百分比高度严格控制为 0，防止底部出现无意义细线
     const inPercent = realMax > 0 ? (finalIn[i] / maxTrafficValue.value) * 100 : 0
     const outPercent = realMax > 0 ? (finalOut[i] / maxTrafficValue.value) * 100 : 0
     
@@ -449,7 +449,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #ffffff !important; /* 强制锁定文字颜色为纯白 */
+  color: #ffffff !important;
   flex-shrink: 0;
   font-size: 26px;
   font-weight: bold;
@@ -467,46 +467,79 @@ onMounted(() => {
   width: 100%;
 }
 
+/* 图表外层网格 */
 .chart-grid {
+  position: relative;
   display: grid;
   grid-template-columns: 72px minmax(0, 1fr);
   gap: 16px;
-  height: 320px; /* 固定整体高度，为内部子容器分配基准参照 */
+  height: 320px; 
+  box-sizing: border-box;
 }
 
+/* Y 轴刻度文字容器 */
 .chart-axis {
+  position: relative;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding-bottom: 28px;
+  padding: 0 16px 28px 0; 
   font-size: 12px;
-  color: var(--n-text-color-3);
+  color: #8c8c8c;
   text-align: right;
+  box-sizing: border-box;
 }
 
+/* 显式 Y 轴纵向主线 */
+.main-axis-y {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 28px;
+  width: 1px;
+  background-color: #e0e0e0;
+  z-index: 3;
+}
+
+/* 柱状图核心绘制区域（不包含底部日期） */
 .bars-area {
   position: relative;
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  padding-bottom: 28px;
-  height: 100%;
+  height: calc(100% - 28px); 
   box-sizing: border-box;
 }
 
+/* 显式 X 轴横向主线 */
+.main-axis-x {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background-color: #e0e0e0;
+  z-index: 3;
+}
+
+/* 内部背景网格参考线 */
 .grid-line {
   position: absolute;
   left: 0;
   right: 0;
   height: 1px;
-  background-color: var(--n-divider-color);
+  background-color: #f0f0f0;
+  pointer-events: none;
+  z-index: 0;
 }
+.grid-line.line-25 { top: 25%; }
+.grid-line.line-50 { top: 50%; }
+.grid-line.line-75 { top: 75%; }
 
-.grid-line.top { top: 0; }
-.grid-line.middle { top: calc(50% - 14px); }
-.grid-line.bottom { bottom: 28px; }
-
+/* 单日柱状图列容器 */
 .day-column {
+  position: relative;
+  z-index: 1;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -514,29 +547,37 @@ onMounted(() => {
   height: 100%;
 }
 
+/* 双柱形组合 */
 .bars-group {
   width: 60%;
-  flex: 1; /* 自动撑满上方空位，杜绝百分比在流式布局下塌陷 */
+  height: 100%; 
   display: flex;
   align-items: flex-end;
   gap: 6px;
 }
 
+/* 单个柱条基类 */
 .bar {
   flex: 1;
   border-radius: 4px 4px 0 0;
   transition: height 0.3s ease;
+  z-index: 2;
 }
 
 .bar-in { background-color: #18a058; }
 .bar-out { background-color: #2080f0; }
 
+/* X 轴日期标签：绝对定位在每一列的最下方 */
 .date-label {
+  position: absolute;
+  top: 100%; 
+  left: 50%;
+  transform: translateX(-50%);
   width: 100%;
   text-align: center;
   font-size: 12px;
-  color: var(--n-text-color-3);
-  padding-top: 8px; /* 抛弃负坐标，改用标准容器内边距撑开 */
+  color: #8c8c8c;
+  padding-top: 8px; 
 }
 
 .legend-dot {
