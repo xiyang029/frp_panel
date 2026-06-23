@@ -29,56 +29,13 @@
 
     <n-spin :show="loading">
       <n-space v-if="proxies.length > 0" vertical :size="16">
-        <router-link
+        <ProxyListCard
           v-for="proxy in proxies"
           :key="`${proxy.type}:${proxy.name}`"
+          :proxy="proxy"
           :to="proxyLink(proxy.name)"
-          style="display: block; text-decoration: none;"
-        >
-          <n-card size="small" hoverable :style="{ cursor: 'pointer' }">
-            <n-space justify="space-between" align="start" wrap>
-              <n-space vertical :size="8" :style="{ minWidth: '0' }">
-                <n-space align="center" :size="8" wrap>
-                  <n-text strong>{{ proxy.name }}</n-text>
-                  <n-tag v-if="activeType === 'all'" size="small" :bordered="false">
-                    {{ proxy.type.toUpperCase() }}
-                  </n-tag>
-                  <n-tag size="small" :type="proxy.status === 'online' ? 'success' : 'error'" :bordered="false">
-                    {{ proxy.status }}
-                  </n-tag>
-                </n-space>
-
-                <n-space align="center" :size="16" wrap>
-                  <div v-if="proxy.port" style="display:inline-flex;align-items:center;gap:4px;">
-                    <n-icon size="16" depth="3">
-                      <Server />
-                    </n-icon>
-                    <n-text depth="3"> {{ proxy.port }}</n-text>
-                  </div>
-                  <div style="display:inline-flex;align-items:center;gap:4px;">
-                    <n-icon size="16" depth="3">
-                      <Link />
-                    </n-icon>
-                    <n-text depth="3"> {{ proxy.conns }}</n-text>
-                  </div>
-                  <div v-if="proxy.clientID" style="display:inline-flex;align-items:center;gap:4px;">
-                    <n-icon size="16" depth="3">
-                      <Users />
-                    </n-icon>
-                    <n-text depth="3">
-                      {{ proxy.user ? `${proxy.user}.${proxy.clientID}` : proxy.clientID }}
-                    </n-text>
-                  </div>
-                </n-space>
-              </n-space>
-
-              <n-space vertical align="end" :size="4" :style="{ flexShrink: 0 }">
-                <n-text depth="3">↑ {{ formatFileSize(proxy.trafficOut) }}</n-text>
-                <n-text depth="3">↓ {{ formatFileSize(proxy.trafficIn) }}</n-text>
-              </n-space>
-            </n-space>
-          </n-card>
-        </router-link>
+          :show-type-tag="activeType === 'all'"
+        />
       </n-space>
       <n-empty v-else description="暂无代理" />
     </n-spin>
@@ -107,7 +64,6 @@ import { useRoute, useRouter } from 'vue-router'
 import {
   NButton,
   NEmpty,
-  NIcon,
   NInput,
   NModal,
   NPagination,
@@ -116,11 +72,8 @@ import {
   NSelect,
   NSpace,
   NSpin,
-  NTag,
-  NText,
-  NCard,
 } from 'naive-ui'
-import { Link, Search, Server, Users } from '@vicons/tabler'
+import { Search } from '@vicons/tabler'
 import {
   BaseProxy,
   TCPProxy,
@@ -131,13 +84,13 @@ import {
   STCPProxy,
   SUDPProxy,
 } from '../utils/proxy'
-import { formatFileSize } from '../utils/format'
 import { getProxiesV2, clearOfflineProxies as apiClearOfflineProxies } from '../api/proxy'
 import { getServerInfo } from '../api/server'
 import { getClientsV2 } from '../api/client'
 import { Client } from '../utils/client'
 import type { ProxyStatsInfo } from '../types/proxy'
 import { createMessageHelpers } from '../naive'
+import ProxyListCard from '../components/ProxyListCard.vue'
 
 const route = useRoute()
 const router = useRouter()

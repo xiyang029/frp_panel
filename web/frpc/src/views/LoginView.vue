@@ -1,7 +1,7 @@
 <template>
   <DashboardLoginView
     title="登录客户端面板"
-    card-width="min(420px, 100%)"
+    card-width="min(440px, 100%)"
     default-next-path="/proxies"
     :embedded="embedded"
     :submit-login="submitLogin"
@@ -14,11 +14,14 @@ import DashboardLoginView from '@common/components/DashboardLoginView.vue'
 import { getStatus } from '../api/frpc'
 import { setDashboardAuth } from '../utils/auth'
 
-withDefaults(defineProps<{
-  embedded?: boolean
-}>(), {
-  embedded: false,
-})
+withDefaults(
+  defineProps<{
+    embedded?: boolean
+  }>(),
+  {
+    embedded: false,
+  },
+)
 const emit = defineEmits<{
   success: []
 }>()

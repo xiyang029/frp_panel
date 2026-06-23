@@ -7,6 +7,7 @@ import ClientDetail from '../views/ClientDetail.vue'
 import Proxies from '../views/Proxies.vue'
 import ProxyDetail from '../views/ProxyDetail.vue'
 import { hasDashboardAuth, probeDashboardAuthRequired } from '../utils/auth'
+import { createDashboardAuthGuard } from '@common/router/dashboardAuth'
 
 const router = createRouter({
   history: createWebHashHistory(),
@@ -53,29 +54,17 @@ const router = createRouter({
   ],
 })
 
+const dashboardAuthGuard = createDashboardAuthGuard({
+  loginRouteName: 'Login',
+  authenticatedRouteName: 'ServerOverview',
+  hasDashboardAuth,
+  probeDashboardAuthRequired,
+})
+
 router.beforeEach(async (to) => {
-  if (to.name === 'Login' && hasDashboardAuth()) {
-    return { name: 'ServerOverview' }
-  }
-
-  if (to.meta.public) {
-    return true
-  }
-
-  if (hasDashboardAuth()) {
-    return true
-  }
-
-  const authRequired = await probeDashboardAuthRequired()
-  if (!authRequired) {
-    return true
-  }
-
-  if (!to.meta.public && authRequired && !hasDashboardAuth()) {
-    return {
-      name: 'Login',
-      query: { next: encodeURIComponent(to.fullPath) },
-    }
+  const authResult = await dashboardAuthGuard(to)
+  if (authResult !== true) {
+    return authResult
   }
 
   return true

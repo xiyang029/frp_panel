@@ -1,54 +1,34 @@
+import {
+  buildBasicAuthHeader as buildBasicAuthHeaderBase,
+  clearDashboardAuth as clearDashboardAuthBase,
+  getDashboardAuth as getDashboardAuthBase,
+  hasDashboardAuth as hasDashboardAuthBase,
+  probeDashboardAuthRequired as probeDashboardAuthRequiredBase,
+  setDashboardAuth as setDashboardAuthBase,
+  type DashboardAuth,
+} from '@common/utils/auth'
+
 const STORAGE_KEY = 'frpc-dashboard-auth'
 const AUTH_PROBE_PATH = '/api/status'
 
-export interface DashboardAuth {
-  username: string
-  password: string
-}
+export type { DashboardAuth }
 
-export const getDashboardAuth = (): DashboardAuth | null => {
-  const raw = window.localStorage.getItem(STORAGE_KEY)
-  if (!raw) {
-    return null
-  }
+export const getDashboardAuth = (): DashboardAuth | null =>
+  getDashboardAuthBase(STORAGE_KEY)
 
-  try {
-    const parsed = JSON.parse(raw) as Partial<DashboardAuth>
-    if (!parsed.username || !parsed.password) {
-      return null
-    }
-    return {
-      username: parsed.username,
-      password: parsed.password,
-    }
-  } catch {
-    return null
-  }
-}
-
-export const hasDashboardAuth = (): boolean => getDashboardAuth() !== null
+export const hasDashboardAuth = (): boolean =>
+  hasDashboardAuthBase(STORAGE_KEY)
 
 export const setDashboardAuth = (auth: DashboardAuth): void => {
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(auth))
+  setDashboardAuthBase(STORAGE_KEY, auth)
 }
 
 export const clearDashboardAuth = (): void => {
-  window.localStorage.removeItem(STORAGE_KEY)
+  clearDashboardAuthBase(STORAGE_KEY)
 }
 
-export const buildBasicAuthHeader = (): string | null => {
-  const auth = getDashboardAuth()
-  if (!auth) {
-    return null
-  }
-  return `Basic ${window.btoa(`${auth.username}:${auth.password}`)}`
-}
+export const buildBasicAuthHeader = (): string | null =>
+  buildBasicAuthHeaderBase(STORAGE_KEY)
 
-// Detect whether the dashboard endpoint requires Basic Auth before showing the login page.
-export const probeDashboardAuthRequired = async (): Promise<boolean> => {
-  const response = await fetch(AUTH_PROBE_PATH, {
-    credentials: 'include',
-    method: 'GET',
-  })
-  return response.status === 401
-}
+export const probeDashboardAuthRequired = async (): Promise<boolean> =>
+  probeDashboardAuthRequiredBase(AUTH_PROBE_PATH)

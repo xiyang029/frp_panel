@@ -21,7 +21,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	httppkg "github.com/fatedier/frp/pkg/util/http"
-	netpkg "github.com/fatedier/frp/pkg/util/net"
 	adminapi "github.com/fatedier/frp/server/http"
 )
 
@@ -29,14 +28,7 @@ func (svr *Service) registerRouteHandlers(helper *httppkg.RouterRegisterHelper) 
 	helper.Router.HandleFunc("/healthz", healthz)
 	apiController := adminapi.NewController(svr.cfg, svr.clientRegistry, svr.pxyManager)
 
-	publicRouter := helper.Router.NewRoute().Subrouter()
-	publicRouter.Handle("/favicon.ico", http.FileServer(helper.AssetsFS)).Methods("GET")
-	publicRouter.PathPrefix("/static/").Handler(
-		netpkg.MakeHTTPGzipHandler(http.StripPrefix("/static/", http.FileServer(helper.AssetsFS))),
-	).Methods("GET")
-	publicRouter.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, "/static/", http.StatusMovedPermanently)
-	})
+	httppkg.RegisterPublicAssetsRoutes(helper.Router, helper.AssetsFS)
 
 	subRouter := helper.Router.NewRoute().Subrouter()
 	subRouter.Use(helper.AuthMiddleware)

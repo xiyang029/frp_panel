@@ -18,7 +18,7 @@ import { useRoute } from 'vue-router'
 import type { MenuOption } from 'naive-ui'
 import DashboardShell from '@common/components/DashboardShell.vue'
 import LoginView from './views/LoginView.vue'
-import { closeLoginModal, loginModalVisible } from './composables/loginModal'
+import { closeLoginModal, loginModalVisible } from '@common/composables/loginModal'
 
 const route = useRoute()
 const menuOptions: MenuOption[] = [

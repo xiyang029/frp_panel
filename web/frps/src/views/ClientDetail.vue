@@ -68,41 +68,12 @@
 
           <n-spin :show="proxiesLoading">
             <n-space v-if="filteredProxies.length > 0" vertical :size="12">
-              <router-link
+              <ProxyListCard
                 v-for="proxy in filteredProxies"
                 :key="proxy.name"
+                :proxy="proxy"
                 :to="proxyLink(proxy.name)"
-                style="display: block; text-decoration: none;"
-              >
-                <n-card size="small" hoverable :style="{ cursor: 'pointer' }">
-                  <n-space justify="space-between" align="start" wrap>
-                    <n-space vertical :size="8" :style="{ minWidth: '0' }">
-                      <n-space align="center" :size="8" wrap>
-                        <n-text strong>{{ proxy.name }}</n-text>
-                        <n-tag size="small" :bordered="false">
-                          {{ proxy.type.toUpperCase() }}
-                        </n-tag>
-                        <n-tag size="small" :type="proxy.status === 'online' ? 'success' : 'error'" :bordered="false">
-                          {{ proxy.status }}
-                        </n-tag>
-                      </n-space>
-
-                      <n-space :size="8" wrap>
-                        <n-text depth="3" v-if="proxy.port">端口: {{ proxy.port }}</n-text>
-                        <n-text depth="3">连接数: {{ proxy.conns }}</n-text>
-                        <n-text depth="3" v-if="proxy.clientID">
-                          客户端: {{ proxy.user ? `${proxy.user}.${proxy.clientID}` : proxy.clientID }}
-                        </n-text>
-                      </n-space>
-                    </n-space>
-
-                    <n-space vertical align="end" :size="4" :style="{ flexShrink: 0 }">
-                      <n-text depth="3">↑ {{ formatFileSize(proxy.trafficOut) }}</n-text>
-                      <n-text depth="3">↓ {{ formatFileSize(proxy.trafficIn) }}</n-text>
-                    </n-space>
-                  </n-space>
-                </n-card>
-              </router-link>
+              />
             </n-space>
             <n-empty
               v-else-if="clientProxies.length > 0"
@@ -132,11 +103,9 @@ import {
   NBreadcrumbItem,
   NAvatar,
   NButton,
-  NCard,
   NEmpty,
   NGrid,
   NGridItem,
-  NIcon,
   NInput,
   NSpace,
   NSpin,
@@ -158,8 +127,8 @@ import {
   SUDPProxy,
 } from '../utils/proxy'
 import { getServerInfo } from '../api/server'
-import { formatFileSize } from '../utils/format'
 import { createMessageHelpers } from '../naive'
+import ProxyListCard from '../components/ProxyListCard.vue'
 
 const route = useRoute()
 const router = useRouter()

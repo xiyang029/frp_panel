@@ -18,7 +18,7 @@ import { useRoute } from 'vue-router'
 import type { MenuOption } from 'naive-ui'
 import { ArrowsLeftRight, Home, Settings, Users } from '@vicons/tabler'
 import DashboardShell from '@common/components/DashboardShell.vue'
-import { closeLoginModal, loginModalVisible } from './composables/loginModal'
+import { closeLoginModal, loginModalVisible } from '@common/composables/loginModal'
 import LoginView from './views/LoginView.vue'
 import { NIcon } from 'naive-ui'
 

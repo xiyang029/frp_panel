@@ -9,6 +9,7 @@ import VisitorEdit from '../views/VisitorEdit.vue'
 import VisitorList from '../views/VisitorList.vue'
 import { useProxyStore } from '../stores/proxy'
 import { hasDashboardAuth, probeDashboardAuthRequired } from '../utils/auth'
+import { createDashboardAuthGuard } from '@common/router/dashboardAuth'
 
 const router = createRouter({
   history: createWebHashHistory(),
@@ -75,29 +76,17 @@ const router = createRouter({
   ],
 })
 
+const dashboardAuthGuard = createDashboardAuthGuard({
+  loginRouteName: 'Login',
+  authenticatedRouteName: 'ProxyList',
+  hasDashboardAuth,
+  probeDashboardAuthRequired,
+})
+
 router.beforeEach(async (to) => {
-  if (to.name === 'Login' && hasDashboardAuth()) {
-    return { name: 'ProxyList' }
-  }
-
-  if (to.meta.public) {
-    return true
-  }
-
-  if (hasDashboardAuth()) {
-    return true
-  }
-
-  const authRequired = await probeDashboardAuthRequired()
-  if (!authRequired) {
-    return true
-  }
-
-  if (!to.meta.public && authRequired && !hasDashboardAuth()) {
-    return {
-      name: 'Login',
-      query: { next: encodeURIComponent(to.fullPath) },
-    }
+  const authResult = await dashboardAuthGuard(to)
+  if (authResult !== true) {
+    return authResult
   }
 
   if (!to.matched.some((record) => record.meta.requiresStore)) {
