@@ -2,6 +2,8 @@ serverAddr = "127.0.0.1"
 serverPort = 7000
 loginFailExit = false
 
+transport.protocol = "kcp"
+
 auth.method = "token"
 auth.token = "dev-token"
 

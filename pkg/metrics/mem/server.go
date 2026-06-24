@@ -35,7 +35,6 @@ var (
 func init() {
 	ServerMetrics = sm
 	StatsCollector = sm
-	sm.run()
 }
 
 type serverMetrics struct {
@@ -64,26 +63,6 @@ func newServerMetricsWithClock(clk clock.WithTicker) *serverMetrics {
 
 			ProxyStatistics: make(map[string]*ProxyStatistics),
 		},
-	}
-}
-
-func (m *serverMetrics) run() {
-	go m.runUntil(nil)
-}
-
-func (m *serverMetrics) runUntil(stopCh <-chan struct{}) {
-	ticker := m.clock.NewTicker(12 * time.Hour)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ticker.C():
-			start := m.clock.Now()
-			count, total := m.clearUselessInfo(time.Duration(7*24) * time.Hour)
-			log.Debugf("clear useless proxy statistics data count %d/%d, cost %v", count, total, m.clock.Since(start))
-		case <-stopCh:
-			return
-		}
 	}
 }
 

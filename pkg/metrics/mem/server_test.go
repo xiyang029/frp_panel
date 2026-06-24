@@ -43,37 +43,6 @@ func TestServerMetricsClearUselessInfoUsesClock(t *testing.T) {
 	require.Empty(metrics.info.ProxyStatistics)
 }
 
-func TestServerMetricsRunUsesClockTicker(t *testing.T) {
-	require := require.New(t)
-
-	start := time.Date(2026, time.May, 8, 12, 30, 0, 0, time.UTC)
-	clk := clocktesting.NewFakeClock(start)
-	metrics := newServerMetricsWithClock(clk)
-	metrics.info.ProxyStatistics["proxy"] = &ProxyStatistics{
-		Name:          "proxy",
-		LastStartTime: start.Add(-time.Hour),
-		LastCloseTime: start,
-	}
-
-	stopCh := make(chan struct{})
-	done := make(chan struct{})
-	go func() {
-		defer close(done)
-		metrics.runUntil(stopCh)
-	}()
-	t.Cleanup(func() {
-		close(stopCh)
-		<-done
-	})
-
-	require.Eventually(clk.HasWaiters, time.Second, time.Millisecond)
-	clk.Step(8 * 24 * time.Hour)
-
-	require.Eventually(func() bool {
-		return !metrics.hasProxyStatistics("proxy")
-	}, time.Second, time.Millisecond)
-}
-
 func TestServerMetricsRemoveProxyDeletesOfflineEntry(t *testing.T) {
 	require := require.New(t)
 
@@ -86,12 +55,4 @@ func TestServerMetricsRemoveProxyDeletesOfflineEntry(t *testing.T) {
 	metrics.RemoveProxy("proxy", "tcp")
 
 	require.Nil(metrics.GetProxyByName("proxy"))
-}
-
-func (m *serverMetrics) hasProxyStatistics(name string) bool {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	_, ok := m.info.ProxyStatistics[name]
-	return ok
 }

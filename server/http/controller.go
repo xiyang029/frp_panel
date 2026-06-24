@@ -26,7 +26,6 @@ import (
 	v1 "github.com/fatedier/frp/pkg/config/v1"
 	"github.com/fatedier/frp/pkg/metrics/mem"
 	httppkg "github.com/fatedier/frp/pkg/util/http"
-	"github.com/fatedier/frp/pkg/util/log"
 	"github.com/fatedier/frp/pkg/util/version"
 	"github.com/fatedier/frp/server/http/model"
 	"github.com/fatedier/frp/server/proxy"
@@ -216,17 +215,6 @@ func (c *Controller) APIProxyByName(ctx *httppkg.Context) (any, error) {
 	}
 
 	return proxyInfo, nil
-}
-
-// DELETE /api/proxies?status=offline
-func (c *Controller) DeleteProxies(ctx *httppkg.Context) (any, error) {
-	status := ctx.Query("status")
-	if status != "offline" {
-		return nil, httppkg.NewError(http.StatusBadRequest, "status only support offline")
-	}
-	cleared, total := mem.StatsCollector.ClearOfflineProxies()
-	log.Infof("cleared [%d] offline proxies, total [%d] proxies", cleared, total)
-	return httppkg.GeneralResponse{Code: 200, Msg: "success"}, nil
 }
 
 func (c *Controller) getProxyStatsByType(proxyType string) (proxyInfos []*model.ProxyStatsInfo) {

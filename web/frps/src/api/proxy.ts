@@ -57,7 +57,3 @@ export const getProxyByName = (name: string) => {
 export const getProxyTraffic = (name: string) => {
   return http.get<TrafficResponse>(`../api/traffic/${name}`)
 }
-
-export const clearOfflineProxies = () => {
-  return http.delete('../api/proxies?status=offline')
-}

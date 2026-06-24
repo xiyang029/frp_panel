@@ -2,8 +2,6 @@
   <n-space vertical size="large">
     <n-space justify="space-between" align="center" wrap>
       <n-text strong style="font-size: 28px;">代理列表</n-text>
-
-      <n-button type="error" secondary @click="showClearDialog = true">清理离线代理</n-button>
     </n-space>
 
     <n-space vertical :size="16">
@@ -45,16 +43,6 @@
         show-size-picker show-quick-jumper @update:page="onPageChange" @update:page-size="onPageSizeChange" />
     </n-space>
 
-    <n-modal v-model:show="showClearDialog" preset="card" title="清理离线代理"
-      :style="{ width: '400px', maxWidth: 'calc(100vw - 24px)' }" :mask-closable="false">
-      <n-text depth="3">确认清理所有离线代理吗？</n-text>
-      <template #footer>
-        <n-space justify="end">
-          <n-button secondary @click="showClearDialog = false">取消</n-button>
-          <n-button type="error" @click="handleClearConfirm">清理</n-button>
-        </n-space>
-      </template>
-    </n-modal>
   </n-space>
 </template>
 
@@ -62,10 +50,8 @@
 import { computed, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
-  NButton,
   NEmpty,
   NInput,
-  NModal,
   NPagination,
   NRadioButton,
   NRadioGroup,
@@ -84,7 +70,7 @@ import {
   STCPProxy,
   SUDPProxy,
 } from '../utils/proxy'
-import { getProxiesV2, clearOfflineProxies as apiClearOfflineProxies } from '../api/proxy'
+import { getProxiesV2 } from '../api/proxy'
 import { getServerInfo } from '../api/server'
 import { getClientsV2 } from '../api/client'
 import { Client } from '../utils/client'
@@ -113,7 +99,6 @@ const proxies = ref<BaseProxy[]>([])
 const clients = ref<Client[]>([])
 const loading = ref(false)
 const searchText = ref('')
-const showClearDialog = ref(false)
 const clientIDFilter = ref((route.query.clientID as string) || '')
 const userFilter = ref((route.query.user as string) || '')
 const page = ref(1)
@@ -318,21 +303,6 @@ const onPageSizeChange = (value: number) => {
 }
 
 const proxyLink = (name: string) => `/proxy/${name}`
-
-const handleClearConfirm = async () => {
-  showClearDialog.value = false
-  await clearOfflineProxies()
-}
-
-const clearOfflineProxies = async () => {
-  try {
-    await apiClearOfflineProxies()
-    message.success('已清理离线代理')
-    fetchData()
-  } catch (err: any) {
-    message.warning('清理离线代理失败：' + err.message)
-  }
-}
 
 watch(activeType, (newType) => {
   clearSearchDebounce()
