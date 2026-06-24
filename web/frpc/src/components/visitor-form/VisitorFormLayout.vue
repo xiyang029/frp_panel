@@ -25,14 +25,14 @@
           <n-input
             v-model:value="form.serverName"
             :disabled="readonly"
-            placeholder="要访问的服务端代理名称"
+            placeholder="服务端代理名称"
           />
         </n-form-item-gi>
         <n-form-item-gi label="服务端用户">
           <n-input
             v-model:value="form.serverUser"
             :disabled="readonly"
-            placeholder="留空表示使用当前用户"
+            placeholder="留空则使用当前用户"
           />
         </n-form-item-gi>
       </n-grid>
@@ -40,7 +40,6 @@
         <n-input
           v-model:value="form.secretKey"
           :disabled="readonly"
-          placeholder="共享密钥"
           type="password"
           show-password-on="click"
         />
@@ -62,7 +61,7 @@
 
     <n-card size="small">
       <n-collapse :default-expanded-names="hasTransportValue ? ['transport'] : []">
-        <n-collapse-item title="传输选项" name="transport" :disabled="readonly && !hasTransportValue">
+        <n-collapse-item title="传输" name="transport" :disabled="readonly && !hasTransportValue">
           <template #header-extra>
             <n-tag v-if="readonly && !hasTransportValue" size="small" :bordered="false">未配置</n-tag>
           </template>
@@ -82,7 +81,7 @@
     <n-card v-if="form.type === 'xtcp'" size="small">
       <n-space vertical :size="16">
         <n-collapse :default-expanded-names="hasXtcpValue ? ['xtcp'] : []">
-          <n-collapse-item title="XTCP 选项" name="xtcp" :disabled="readonly && !hasXtcpValue">
+          <n-collapse-item title="XTCP" name="xtcp" :disabled="readonly && !hasXtcpValue">
             <template #header-extra>
               <n-tag v-if="readonly && !hasXtcpValue" size="small" :bordered="false">未配置</n-tag>
             </template>

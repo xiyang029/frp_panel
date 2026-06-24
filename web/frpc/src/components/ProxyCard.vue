@@ -35,13 +35,26 @@
       </n-space>
     </template>
 
-    <n-text depth="3">
-      <template v-if="proxy.remote_addr && localDisplay">
-        {{ proxy.remote_addr }} → {{ localDisplay }}
-      </template>
-      <template v-else-if="proxy.remote_addr">{{ proxy.remote_addr }}</template>
-      <template v-else-if="localDisplay">{{ localDisplay }}</template>
-    </n-text>
+    <n-space vertical :size="6">
+      <n-text depth="3">
+        <template v-if="proxy.remote_addr && localDisplay">
+          {{ proxy.remote_addr }} → {{ localDisplay }}
+        </template>
+        <template v-else-if="proxy.remote_addr">{{ proxy.remote_addr }}</template>
+        <template v-else-if="localDisplay">{{ localDisplay }}</template>
+      </n-text>
+
+      <n-space align="center" :size="16" wrap>
+        <n-space v-if="proxy.plugin" align="center" :size="4">
+          <n-text depth="3">插件</n-text>
+          <n-text>{{ proxy.plugin }}</n-text>
+        </n-space>
+        <n-space v-if="proxy.conns || proxy.conns === 0" align="center" :size="4">
+          <n-text depth="3">连接</n-text>
+          <n-text>{{ proxy.conns }}</n-text>
+        </n-space>
+      </n-space>
+    </n-space>
   </n-card>
 </template>
 

@@ -10,7 +10,6 @@
 
     <n-card :bordered="false">
       <n-space vertical :size="16">
-
         <template v-if="visitorStore.storeEnabled">
           <n-grid responsive="screen" cols="1 m:2" :x-gap="12" :y-gap="12">
             <n-gi>
@@ -59,7 +58,7 @@
             <n-text depth="3">{{ getServerName(v) || '未设置服务端代理' }}</n-text>
           </n-card>
         </n-space>
-        <n-empty v-else description="点击“新建访问器”即可创建。" />
+        <n-empty v-else description="暂无访问器" style="min-height: 50vh; display: flex; flex-direction: column; align-items: center; justify-content: center;"/>
       </template>
     </n-spin>
 

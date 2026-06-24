@@ -11,12 +11,12 @@
     </n-space>
 
     <n-card size="small" segmented :bordered="false">
-      <n-space vertical :size="16">
-        <n-tabs v-model:value="activeTab" type="line" @update:value="handleTabChange">
-          <n-tab-pane name="status" tab="运行状态" />
-          <n-tab-pane name="store" tab="本地配置" />
-        </n-tabs>
+      <n-tabs v-model:value="activeTab" type="line" @update:value="handleTabChange">
+        <n-tab-pane name="status" tab="运行状态" />
+        <n-tab-pane name="store" tab="本地配置" />
+      </n-tabs>
 
+      <n-space vertical :size="12" style="margin-top: 16px;">
         <template v-if="activeTab === 'status'">
           <n-space wrap>
             <n-tag v-for="item in statusTagItems" :key="item.value" :type="item.type" :bordered="false"
@@ -59,7 +59,7 @@
       <n-space v-if="filteredStatus.length > 0" vertical :size="12">
         <ProxyCard v-for="p in filteredStatus" :key="p.name" :proxy="p" showSource @click="goToDetail(p.name)" />
       </n-space>
-      <n-empty v-else-if="!proxyStore.loading" description="代理配置创建并连接成功后，会显示在这里。" />
+      <n-empty v-else-if="!proxyStore.loading" description="暂无运行中的代理" style="min-height: 50vh; display: flex; flex-direction: column; align-items: center; justify-content: center;"/>
     </n-spin>
 
     <n-spin v-else :show="proxyStore.storeLoading">
@@ -77,7 +77,7 @@
             showActions @click="goToDetail(p.name)" @edit="handleEdit" @toggle="handleToggleProxy"
             @delete="handleDeleteProxy(p.name)" />
         </n-space>
-        <n-empty v-else description="点击“新建代理”即可创建。" />
+        <n-empty v-else description="暂无本地配置" style="min-height: 50vh; display: flex; flex-direction: column; align-items: center; justify-content: center;"/>
       </template>
     </n-spin>
 

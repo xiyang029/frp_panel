@@ -1,16 +1,16 @@
 <template>
-  <n-space vertical size="large">
+  <n-space vertical :size="16">
     <n-breadcrumb separator=">">
-        <n-breadcrumb-item>
-          <router-link to="/clients" style="text-decoration: none;">客户端列表</router-link>
-        </n-breadcrumb-item>
+      <n-breadcrumb-item>
+        <router-link to="/clients" style="text-decoration: none;">客户端列表</router-link>
+      </n-breadcrumb-item>
       <n-breadcrumb-item>{{ client?.displayName || route.params.key }}</n-breadcrumb-item>
     </n-breadcrumb>
 
     <n-spin :show="loading">
-      <n-space v-if="client" vertical size="large">
+      <n-space v-if="client" vertical :size="16">
         <n-card :bordered="false">
-          <n-space vertical size="large">
+          <n-space vertical :size="16">
             <n-space justify="space-between" align="start" wrap>
               <n-space align="center" :size="12" :wrap="false">
                 <n-avatar round :size="56">
@@ -18,7 +18,7 @@
                 </n-avatar>
                 <n-space vertical :size="6">
                   <n-space align="center" :size="8" :wrap="true">
-                <n-text strong style="font-size: 20px;">{{ client.displayName }}</n-text>
+                    <n-text strong style="font-size: 20px;">{{ client.displayName }}</n-text>
                     <n-tag v-if="client.version" size="small" type="success" round>
                       v{{ client.version }}
                     </n-tag>
@@ -53,7 +53,7 @@
 
         <n-card :bordered="false">
           <template #header>
-            <n-space justify="space-between" align="center">
+            <n-space justify="space-between" align="center" :size="12">
               <n-space align="center" :size="8">
                 <n-text strong>代理列表</n-text>
                 <n-tag round>{{ filteredProxies.length }}</n-tag>
@@ -79,7 +79,7 @@
               v-else-if="clientProxies.length > 0"
               :description="`没有匹配“${proxySearch}”的代理`"
             />
-            <n-empty v-else description="暂无代理" />
+            <n-empty v-else description="暂无代理" style="min-height: 50vh; display: flex; flex-direction: column; align-items: center; justify-content: center;" />
           </n-spin>
         </n-card>
       </n-space>

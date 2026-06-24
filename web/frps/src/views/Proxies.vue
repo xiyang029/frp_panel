@@ -35,7 +35,7 @@
           :show-type-tag="activeType === 'all'"
         />
       </n-space>
-      <n-empty v-else description="暂无代理" />
+      <n-empty v-else description="暂无代理" style="min-height: 50vh; display: flex; flex-direction: column; align-items: center; justify-content: center;"/>
     </n-spin>
 
     <n-space v-if="total > 0" justify="end">

@@ -1,231 +1,232 @@
 <template>
-  <n-breadcrumb separator=">">
-    <template v-if="fromClient">
-      <n-breadcrumb-item>
-        <router-link to="/clients" style="text-decoration: none;">客户端列表</router-link>
-      </n-breadcrumb-item>
-      <n-breadcrumb-item>
-        <router-link :to="`/clients/${fromClient}`" style="text-decoration: none;">
-          {{ fromClient }}
-        </router-link>
-      </n-breadcrumb-item>
-    </template>
-    <template v-else>
-      <n-breadcrumb-item>
-        <router-link to="/proxies" style="text-decoration: none;">代理列表</router-link>
-      </n-breadcrumb-item>
-      <n-breadcrumb-item v-if="proxy?.clientID">
-        <router-link :to="clientLink" style="text-decoration: none;">
-          {{ proxy.user ? `${proxy.user}.${proxy.clientID}` : proxy.clientID }}
-        </router-link>
-      </n-breadcrumb-item>
-    </template>
-    <n-breadcrumb-item>{{ proxyName }}</n-breadcrumb-item>
-  </n-breadcrumb>
-
-  <n-spin :show="loading">
-    <n-empty v-if="!proxy" description="该代理不存在，或已被移除。">
-      <template #extra>
-        <n-button type="primary" size="small" @click="router.push('/proxies')">
-          返回代理列表
-        </n-button>
+  <n-space vertical :size="16">
+    <n-breadcrumb separator=">">
+      <template v-if="fromClient">
+        <n-breadcrumb-item>
+          <router-link to="/clients" style="text-decoration: none;">客户端列表</router-link>
+        </n-breadcrumb-item>
+        <n-breadcrumb-item>
+          <router-link :to="`/clients/${fromClient}`" style="text-decoration: none;">
+            {{ fromClient }}
+          </router-link>
+        </n-breadcrumb-item>
       </template>
-    </n-empty>
+      <template v-else>
+        <n-breadcrumb-item>
+          <router-link to="/proxies" style="text-decoration: none;">代理列表</router-link>
+        </n-breadcrumb-item>
+        <n-breadcrumb-item v-if="proxy?.clientID">
+          <router-link :to="clientLink" style="text-decoration: none;">
+            {{ proxy.user ? `${proxy.user}.${proxy.clientID}` : proxy.clientID }}
+          </router-link>
+        </n-breadcrumb-item>
+      </template>
+      <n-breadcrumb-item>{{ proxyName }}</n-breadcrumb-item>
+    </n-breadcrumb>
 
-    <div v-else style="display: flex; flex-direction: column; gap: 12px; margin-top: 12px;">
-      <n-card :bordered="false">
-        <n-space :size="16" align="center" style="margin-bottom: 20px;">
-          <n-avatar
-            round
-            :size="56"
-            :style="{
+    <n-spin :show="loading" style="min-height: 50vh; display: flex; flex-direction: column;"
+      content-style="flex: 1; display: flex; flex-direction: column;">
+
+      <n-empty v-if="!proxy" description="该代理不存在，或已被移除。"
+        style="display: flex; flex-direction: column; justify-content: center; align-items: center; flex: 1; height: 100%;">
+        <template #extra>
+          <n-button type="primary" size="small" @click="router.push('/proxies')">
+            返回代理列表
+          </n-button>
+        </template>
+      </n-empty>
+
+      <div v-else>
+        <n-card :bordered="false">
+          <n-space :size="16" align="center" :wrap="true">
+            <n-avatar round :size="56" :style="{
               backgroundColor: proxyIconConfig.color,
               color: '#fff',
               fontSize: '26px',
               fontWeight: '700',
               flexShrink: 0,
-            }"
-          >
-            {{ proxyIconConfig.text }}
-          </n-avatar>
-          
-          <n-space vertical :size="6">
+            }">
+              {{ proxyIconConfig.text }}
+            </n-avatar>
+
+            <n-space vertical :size="8" :style="{ minWidth: '0', flex: '1 1 auto' }">
+              <n-space align="center" :size="8" wrap>
+                <n-text strong style="font-size: 20px; line-height: 1;">{{ proxy.name }}</n-text>
+                <n-tag :bordered="false" size="small" type="info" round uppercase>
+                  {{ proxy.type }}
+                </n-tag>
+                <n-tag :bordered="false" size="small" :type="proxy.status === 'online' ? 'success' : 'default'" round>
+                  {{ proxy.status }}
+                </n-tag>
+              </n-space>
+
+              <n-space align="center" :size="12" wrap>
+                <n-button v-if="proxy.clientID" text @click="router.push(clientLink)">
+                  <template #icon>
+                    <n-icon>
+                      <DeviceDesktop />
+                    </n-icon>
+                  </template>
+                  {{ proxy.user ? `${proxy.user}.${proxy.clientID}` : proxy.clientID }}
+                </n-button>
+                <n-text v-if="proxy.lastStartTime" depth="3">
+                  启动 {{ proxy.lastStartTime }}
+                </n-text>
+                <n-text v-if="proxy.lastCloseTime" depth="3">
+                  关闭 {{ proxy.lastCloseTime }}
+                </n-text>
+              </n-space>
+            </n-space>
+          </n-space>
+
+          <n-grid responsive="screen" cols="1 s:3" :x-gap="12" :y-gap="12">
+            <n-grid-item v-if="proxy.port">
+              <n-card size="small">
+                <n-statistic label="端口" :value="proxy.port" />
+              </n-card>
+            </n-grid-item>
+            <n-grid-item>
+              <n-card size="small">
+                <n-statistic label="连接数" :value="proxy.conns" />
+              </n-card>
+            </n-grid-item>
+            <n-grid-item>
+              <n-card size="small">
+                <n-statistic label="流量">
+                  <template #default>
+                    <n-space align="center" :size="4">
+                      <n-text strong>↓ {{ formatFileSize(proxy.trafficIn) }}</n-text>
+                      <n-text depth="3">/</n-text>
+                      <n-text strong>↑ {{ formatFileSize(proxy.trafficOut) }}</n-text>
+                    </n-space>
+                  </template>
+                </n-statistic>
+              </n-card>
+            </n-grid-item>
+          </n-grid>
+        </n-card>
+
+        <n-card :bordered="false">
+          <template #header>
             <n-space align="center" :size="8">
-              <n-text strong style="font-size: 20px; line-height: 1;">{{ proxy.name }}</n-text>
-              <n-tag :bordered="false" size="small" type="info" round uppercase>
-                {{ proxy.type }}
-              </n-tag>
-              <n-tag
-                :bordered="false"
-                size="small"
-                :type="proxy.status === 'online' ? 'success' : 'default'"
-                round
-              >
-                {{ proxy.status }}
-              </n-tag>
+              <n-icon :size="18">
+                <Settings />
+              </n-icon>
+              <n-text strong>配置信息</n-text>
             </n-space>
-            
-            <n-space align="center" :size="12">
-              <n-button v-if="proxy.clientID" text @click="router.push(clientLink)">
-                <template #icon>
-                  <n-icon><DeviceDesktop /></n-icon>
-                </template>
-                {{ proxy.user ? `${proxy.user}.${proxy.clientID}` : proxy.clientID }}
-              </n-button>
-              <n-text v-if="proxy.lastStartTime" depth="3">
-                最近启动 {{ proxy.lastStartTime }}
-              </n-text>
-              <n-text v-if="proxy.lastCloseTime" depth="3">
-                最近关闭 {{ proxy.lastCloseTime }}
-              </n-text>
-            </n-space>
-          </n-space>
-        </n-space>
+          </template>
 
-        <n-grid responsive="screen" cols="1 s:3" :x-gap="12" :y-gap="12">
-          <n-grid-item v-if="proxy.port">
-            <n-card size="small">
-              <n-statistic label="端口" :value="proxy.port" />
-            </n-card>
-          </n-grid-item>
-          <n-grid-item>
-            <n-card size="small">
-              <n-statistic label="连接数" :value="proxy.conns" />
-            </n-card>
-          </n-grid-item>
-          <n-grid-item>
-            <n-card size="small">
-              <n-statistic label="流量">
-                <template #default>
-                  <n-space align="center" :size="4">
-                    <n-text strong>↓ {{ formatFileSize(proxy.trafficIn) }}</n-text>
-                    <n-text depth="3">/</n-text>
-                    <n-text strong>↑ {{ formatFileSize(proxy.trafficOut) }}</n-text>
-                  </n-space>
-                </template>
-              </n-statistic>
-            </n-card>
-          </n-grid-item>
-        </n-grid>
-      </n-card>
-
-      <n-card :bordered="false">
-        <template #header>
-          <n-space>
-            <n-icon :size="18"><Settings /></n-icon>
-            <n-text strong>配置信息</n-text>
-          </n-space>
-        </template>
-
-        <n-grid responsive="screen" cols="1 s:2" :x-gap="12" :y-gap="12">
-          <n-grid-item v-if="proxy.encryption !== undefined">
-            <n-card size="small">
-              <n-space align="center" :size="12">
-                <n-tag :bordered="false" type="success" round>加密</n-tag>
-                <n-text>{{ proxy.encryption ? '已启用' : '未启用' }}</n-text>
-              </n-space>
-            </n-card>
-          </n-grid-item>
-
-          <n-grid-item v-if="proxy.compression !== undefined">
-            <n-card size="small">
-              <n-space align="center" :size="12">
-                <n-tag :bordered="false" type="info" round>压缩</n-tag>
-                <n-text>{{ proxy.compression ? '已启用' : '未启用' }}</n-text>
-              </n-space>
-            </n-card>
-          </n-grid-item>
-
-          <n-grid-item v-if="proxy.customDomains">
-            <n-card size="small">
-              <n-space vertical :size="4">
-                <n-text depth="3">自定义域名</n-text>
-                <n-text strong>{{ proxy.customDomains }}</n-text>
-              </n-space>
-            </n-card>
-          </n-grid-item>
-
-          <n-grid-item v-if="proxy.subdomain">
-            <n-card size="small">
-              <n-space vertical :size="4">
-                <n-text depth="3">子域名</n-text>
-                <n-text strong>{{ proxy.subdomain }}</n-text>
-              </n-space>
-            </n-card>
-          </n-grid-item>
-
-          <n-grid-item v-if="proxy.locations">
-            <n-card size="small">
-              <n-space vertical :size="4">
-                <n-text depth="3">路由路径</n-text>
-                <n-text strong>{{ proxy.locations }}</n-text>
-              </n-space>
-            </n-card>
-          </n-grid-item>
-
-          <n-grid-item v-if="proxy.hostHeaderRewrite">
-            <n-card size="small">
-              <n-space vertical :size="4">
-                <n-text depth="3">Host 重写</n-text>
-                <n-text strong>{{ proxy.hostHeaderRewrite }}</n-text>
-              </n-space>
-            </n-card>
-          </n-grid-item>
-
-          <n-grid-item v-if="proxy.multiplexer">
-            <n-card size="small">
-              <n-space vertical :size="4">
-                <n-text depth="3">复用器</n-text>
-                <n-text strong>{{ proxy.multiplexer }}</n-text>
-              </n-space>
-            </n-card>
-          </n-grid-item>
-
-          <n-grid-item v-if="proxy.routeByHTTPUser">
-            <n-card size="small">
-              <n-space vertical :size="4">
-                <n-text depth="3">按 HTTP 用户路由</n-text>
-                <n-text strong>{{ proxy.routeByHTTPUser }}</n-text>
-              </n-space>
-            </n-card>
-          </n-grid-item>
-        </n-grid>
-
-        <div v-if="proxy.annotations && proxy.annotations.size > 0" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px;">
-          <n-tag v-for="[key, value] in proxy.annotations" :key="key" :bordered="false" size="small">
-            {{ key }}: {{ value }}
-          </n-tag>
-        </div>
-      </n-card>
-
-      <n-card :bordered="false" title="流量统计">
-        <n-spin :show="trafficLoading">
-          <n-empty v-if="!trafficLoading && chartData.length === 0" description="暂无流量数据" />
-
-          <div v-else>
-            <n-space justify="space-between" align="center" style="margin-bottom: 16px;">
-              <n-space :size="12">
-                <n-text depth="3">近 7 天流量</n-text>
-                <n-text depth="3">峰值 {{ hasTraffic ? formatFileSize(maxTrafficValue) : '0 B' }}</n-text>
-              </n-space>
-              <n-space :size="12">
-                <n-space :size="6" align="center">
-                  <span class="traffic-legend-dot color-in" />
-                  <n-text depth="3">入站流量</n-text>
+          <n-grid responsive="screen" cols="1 s:2" :x-gap="12" :y-gap="12">
+            <n-grid-item v-if="proxy.encryption !== undefined">
+              <n-card size="small">
+                <n-space align="center" :size="12">
+                  <n-tag :bordered="false" type="success" round>加密</n-tag>
+                  <n-text>{{ proxy.encryption ? '已启用' : '未启用' }}</n-text>
                 </n-space>
-                <n-space :size="6" align="center">
-                  <span class="traffic-legend-dot color-out" />
-                  <n-text depth="3">出站流量</n-text>
-                </n-space>
-              </n-space>
-            </n-space>
+              </n-card>
+            </n-grid-item>
 
-            <v-chart class="traffic-chart" :option="trafficChartOption" autoresize />
+            <n-grid-item v-if="proxy.compression !== undefined">
+              <n-card size="small">
+                <n-space align="center" :size="12">
+                  <n-tag :bordered="false" type="info" round>压缩</n-tag>
+                  <n-text>{{ proxy.compression ? '已启用' : '未启用' }}</n-text>
+                </n-space>
+              </n-card>
+            </n-grid-item>
+
+            <n-grid-item v-if="proxy.customDomains">
+              <n-card size="small">
+                <n-space vertical :size="4">
+                  <n-text depth="3">自定义域名</n-text>
+                  <n-text strong>{{ proxy.customDomains }}</n-text>
+                </n-space>
+              </n-card>
+            </n-grid-item>
+
+            <n-grid-item v-if="proxy.subdomain">
+              <n-card size="small">
+                <n-space vertical :size="4">
+                  <n-text depth="3">子域名</n-text>
+                  <n-text strong>{{ proxy.subdomain }}</n-text>
+                </n-space>
+              </n-card>
+            </n-grid-item>
+
+            <n-grid-item v-if="proxy.locations">
+              <n-card size="small">
+                <n-space vertical :size="4">
+                  <n-text depth="3">路由路径</n-text>
+                  <n-text strong>{{ proxy.locations }}</n-text>
+                </n-space>
+              </n-card>
+            </n-grid-item>
+
+            <n-grid-item v-if="proxy.hostHeaderRewrite">
+              <n-card size="small">
+                <n-space vertical :size="4">
+                  <n-text depth="3">Host 重写</n-text>
+                  <n-text strong>{{ proxy.hostHeaderRewrite }}</n-text>
+                </n-space>
+              </n-card>
+            </n-grid-item>
+
+            <n-grid-item v-if="proxy.multiplexer">
+              <n-card size="small">
+                <n-space vertical :size="4">
+                  <n-text depth="3">复用器</n-text>
+                  <n-text strong>{{ proxy.multiplexer }}</n-text>
+                </n-space>
+              </n-card>
+            </n-grid-item>
+
+            <n-grid-item v-if="proxy.routeByHTTPUser">
+              <n-card size="small">
+                <n-space vertical :size="4">
+                  <n-text depth="3">按 HTTP 用户路由</n-text>
+                  <n-text strong>{{ proxy.routeByHTTPUser }}</n-text>
+                </n-space>
+              </n-card>
+            </n-grid-item>
+          </n-grid>
+
+          <div v-if="proxy.annotations && proxy.annotations.size > 0"
+            style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px;">
+            <n-tag v-for="[key, value] in proxy.annotations" :key="key" :bordered="false" size="small">
+              {{ key }}: {{ value }}
+            </n-tag>
           </div>
-        </n-spin>
-      </n-card>
-    </div>
-  </n-spin>
+        </n-card>
+
+        <n-card :bordered="false" title="流量统计">
+          <n-spin :show="trafficLoading">
+            <n-empty v-if="!trafficLoading && chartData.length === 0" description="暂无流量数据" />
+
+            <div v-else>
+              <n-space justify="space-between" align="center" style="margin-bottom: 16px;">
+                <n-space :size="12">
+                  <n-text depth="3">近 7 天</n-text>
+                  <n-text depth="3">峰值 {{ hasTraffic ? formatFileSize(maxTrafficValue) : '0 B' }}</n-text>
+                </n-space>
+                <n-space :size="12">
+                  <n-space :size="6" align="center">
+                    <span class="traffic-legend-dot color-in" />
+                    <n-text depth="3">入站</n-text>
+                  </n-space>
+                  <n-space :size="6" align="center">
+                    <span class="traffic-legend-dot color-out" />
+                    <n-text depth="3">出站</n-text>
+                  </n-space>
+                </n-space>
+              </n-space>
+
+              <v-chart class="traffic-chart" :option="trafficChartOption" autoresize />
+            </div>
+          </n-spin>
+        </n-card>
+      </div>
+    </n-spin>
+  </n-space>
 </template>
 
 <script setup lang="ts">
@@ -385,7 +386,6 @@ const trafficChartOption = computed<EChartsOption>(() => {
         itemStyle: { borderRadius: [4, 4, 0, 0] },
       },
     ],
-    // 移除了内部冗余的无数据 graphic，外部已有 n-empty 包装
     graphic: [],
   }
 })

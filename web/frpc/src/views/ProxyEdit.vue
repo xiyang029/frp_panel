@@ -30,7 +30,7 @@
       :style="{ width: isMobile ? 'calc(100vw - 24px)' : '400px' }"
       :mask-closable="false"
     >
-      <n-text depth="3">当前内容尚未保存，确认离开当前页面吗？</n-text>
+      <n-text depth="3">内容未保存，确认离开吗？</n-text>
       <template #footer>
         <n-space justify="end">
           <n-button type="primary" secondary @click="handleLeaveCancel">取消</n-button>

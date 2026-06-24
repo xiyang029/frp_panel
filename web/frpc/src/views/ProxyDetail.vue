@@ -28,7 +28,7 @@
               <n-tag :type="statusTagType" :bordered="false">{{ proxy.status }}</n-tag>
             </n-space>
             <n-text depth="3">
-              来源：{{ displaySource }} · 类型：{{ proxy.type.toUpperCase() }}
+              {{ displaySource }} · {{ proxy.type.toUpperCase() }}
             </n-text>
           </n-space>
         </n-card>
