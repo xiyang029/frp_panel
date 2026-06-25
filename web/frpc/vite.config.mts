@@ -14,10 +14,6 @@ export default defineConfig({
       '@common': fileURLToPath(new URL('../common', import.meta.url)),
     },
     dedupe: ['vue', 'naive-ui'],
-    modules: [
-      fileURLToPath(new URL('../node_modules', import.meta.url)),
-      'node_modules',
-    ],
   },
   build: {
     assetsDir: '',

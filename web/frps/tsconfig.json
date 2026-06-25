@@ -5,6 +5,7 @@
     "module": "ESNext",
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "skipLibCheck": true,
+    "baseUrl": ".",
 
     /* Bundler mode */
     "moduleResolution": "bundler",
@@ -24,6 +25,6 @@
       "@common/*": ["../common/*"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue"],
+  "include": ["env.d.ts", "src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", "../common/**/*.ts", "../common/**/*.tsx", "../common/**/*.vue", "../common/**/*.d.ts"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
