@@ -6,6 +6,7 @@ set "WEB_DIR=%ROOT%web"
 set "RELEASE_DIR=%ROOT%release"
 set "PACKAGES_DIR=%RELEASE_DIR%\packages"
 set "BIN_DIR=%ROOT%bin"
+set "NPM_REGISTRY=https://registry.npmmirror.com"
 
 where go >nul 2>nul || (
   echo missing command: go
@@ -22,14 +23,14 @@ where tar >nul 2>nul || (
 
 if exist "%BIN_DIR%" rmdir /s /q "%BIN_DIR%"
 if exist "%RELEASE_DIR%" rmdir /s /q "%RELEASE_DIR%"
+if exist "%WEB_DIR%\node_modules" rmdir /s /q "%WEB_DIR%\node_modules"
+if exist "%WEB_DIR%\frps\node_modules" rmdir /s /q "%WEB_DIR%\frps\node_modules"
+if exist "%WEB_DIR%\frpc\node_modules" rmdir /s /q "%WEB_DIR%\frpc\node_modules"
 mkdir "%BIN_DIR%" >nul
 mkdir "%PACKAGES_DIR%" >nul
 
 echo [1/6] Installing frontend dependencies
-if not exist "%WEB_DIR%\node_modules" (
-  call npm --prefix "%WEB_DIR%" install --no-package-lock --workspaces --include-workspace-root
-  if errorlevel 1 goto :fail
-)
+call npm --prefix "%WEB_DIR%" install --registry="%NPM_REGISTRY%" --no-fund --no-audit
 if errorlevel 1 goto :fail
 
 echo [2/6] Building frps web assets
