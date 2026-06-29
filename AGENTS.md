@@ -13,52 +13,43 @@
 - 代码文件不得新增头部元数据、版权模板或无关生成标记。
 - 新增或修改变量、方法、类型、配置字段时，需用功能性命名；必要注释说明用途、边界或非显然行为，避免重复代码字面含义。
 - 优先复用现有目录、包边界、命名风格和错误处理方式。
-- Go 代码保持 `gofmt` 结果；Web 代码遵循现有 Vue、TypeScript、Element Plus、Pinia 和 Vite 写法。
+- Go 代码保持 `gofmt` 结果；Web 代码遵循现有 Vue、TypeScript、Naive ui、Pinia 和 Vite 写法。
 - 配置示例、文档和测试样例必须与实际行为一致，不写未实现能力。
 - 修改完成时必须给出“变更摘要”和“受影响文件列表”。
 
 ## 测试标准
 
 - 仅文档变更：检查目标 Markdown 内容可读、路径引用准确，可运行 `git diff --check -- AGENTS.md docs/项目文件架构.md`。
-- Go 逻辑变更：优先运行受影响包的 `go test -tags "$(NOWEB_TAG)" ./...` 子集；跨包行为运行 `make test`。
-- CLI、配置、认证、代理、网络协议或兼容性变更：补充或更新对应单元测试，并按风险运行 `make e2e` 或 `make alltest`。
+- Go 逻辑变更：优先运行受影响包的 `go test ./...` 子集；跨包行为扩大到相关目录或全量 `go test ./...`。
+- CLI、配置、认证、代理、网络协议或兼容性变更：补充或更新对应单元测试；如需端到端验证，按当前仓库实际测试入口执行，不引用已删除的 `make` 或 `hack/*.sh` 流程。
 - Web 面板变更：在对应 `web/frpc` 或 `web/frps` 下运行 `npm run type-check`、`npm run build`，必要时运行 `npm run lint`。
-- 构建产物变更：运行 `make frpc`、`make frps` 或 `make build`，按触达范围选择。
+- 构建产物变更：按触达范围运行 `go build -tags "frps" ./cmd/frps`、`go build -tags "frpc" ./cmd/frpc`，Web 资源按需执行 `npm run build`。
 
 ## 常用命令
 
 ### Build
 
-- `make build` - 构建 `frps` 和 `frpc`
-- `make frps` - 仅构建服务端二进制
-- `make frpc` - 仅构建客户端二进制
-- `make all` - 格式化、构建 Web 面板并构建二进制
+- `go build -tags "frps" ./cmd/frps` - 仅构建服务端二进制
+- `go build -tags "frpc" ./cmd/frpc` - 仅构建客户端二进制
+- `powershell -File .\dev.ps1` - 启动本地开发联调环境
+- `package.bat` - 构建 Web 资源并打包 Windows/Linux amd64 发布产物
 
 ### Testing
 
-- `make test` - 运行 Go 单元测试
-- `make e2e` - 运行端到端测试
-- `make e2e-trace` - 以 trace 日志运行端到端测试
-- `make alltest` - 运行 vet、单元测试和端到端测试
+- `go test ./...` - 运行 Go 单元测试
+- `run-lint-tsc.bat` - 运行 `web/frps` 与 `web/frpc` 的 lint 和 type-check
 
 ### Code Quality
 
-- `make fmt` - 运行 `go fmt`
-- `make fmt-more` - 运行 `gofumpt`
-- `make gci` - 整理 Go import
-- `make vet` - 运行 `go vet`
-- `golangci-lint run` - 运行 `.golangci.yml` 配置的综合 lint
+- `go fmt ./...` - 运行 Go 格式化
+- `go vet ./...` - 运行 Go vet
+- `npm run lint` - 在对应 Web 子项目下运行 ESLint
 
 ### Assets
 
-- `make web` - 构建 `frps` 和 `frpc` Web 管理面板
+- `npm --prefix .\web\frps run build` - 构建 `frps` Web 管理面板
+- `npm --prefix .\web\frpc run build` - 构建 `frpc` Web 管理面板
 
 ### Cleanup
 
-- `make clean` - 清理二进制、临时兼容性目录和缓存
-
-## Agent Runbooks
-
-运维类流程保存在 `doc/agents/`：
-
-- `doc/agents/release.md` - 发布流程
+- 手动清理 `bin/`、`release/`、`web/*/dist/`、`.cache/dev/` 等本地产物目录
