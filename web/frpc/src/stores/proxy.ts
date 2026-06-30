@@ -1,132 +1,131 @@
-import { defineStore } from 'pinia'
-import { ref } from 'vue'
-import type { ProxyStatus, ProxyDefinition } from '../types'
+import { create } from 'zustand'
+import type { ProxyDefinition, ProxyStatus } from '../types'
 import {
-  getStatus,
-  listStoreProxies,
-  getStoreProxy,
   createStoreProxy,
-  updateStoreProxy,
   deleteStoreProxy,
+  getStatus,
+  getStoreProxy,
+  listStoreProxies,
+  updateStoreProxy,
 } from '../api/frpc'
 
-export const useProxyStore = defineStore('proxy', () => {
-  const proxies = ref<ProxyStatus[]>([])
-  const storeProxies = ref<ProxyDefinition[]>([])
-  const storeEnabled = ref(false)
-  const storeChecked = ref(false)
-  const loading = ref(false)
-  const storeLoading = ref(false)
-  const error = ref<string | null>(null)
+interface ProxyStoreState {
+  proxies: ProxyStatus[]
+  storeProxies: ProxyDefinition[]
+  storeEnabled: boolean
+  storeChecked: boolean
+  loading: boolean
+  storeLoading: boolean
+  error: string | null
+  fetchStatus: () => Promise<void>
+  fetchStoreProxies: () => Promise<void>
+  checkStoreEnabled: () => Promise<boolean>
+  createProxy: (data: ProxyDefinition) => Promise<void>
+  updateProxy: (name: string, data: ProxyDefinition) => Promise<void>
+  deleteProxy: (name: string) => Promise<void>
+  toggleProxy: (name: string, enabled: boolean) => Promise<void>
+  storeProxyWithStatus: (def: ProxyDefinition) => ProxyStatus
+}
 
-  const fetchStatus = async () => {
-    loading.value = true
-    error.value = null
+export const useProxyStore = create<ProxyStoreState>((set, get) => ({
+  proxies: [],
+  storeProxies: [],
+  storeEnabled: false,
+  storeChecked: false,
+  loading: false,
+  storeLoading: false,
+  error: null,
+
+  fetchStatus: async () => {
+    set({ loading: true, error: null })
     try {
       const json = await getStatus()
       const list: ProxyStatus[] = []
       for (const key in json) {
-        for (const ps of json[key]) {
-          list.push(ps)
+        for (const proxy of json[key]) {
+          list.push(proxy)
         }
       }
-      proxies.value = list
+      set({ proxies: list })
     } catch (err: any) {
-      error.value = err.message
+      set({ error: err.message })
       throw err
     } finally {
-      loading.value = false
+      set({ loading: false })
     }
-  }
+  },
 
-  const fetchStoreProxies = async () => {
-    storeLoading.value = true
+  fetchStoreProxies: async () => {
+    set({ storeLoading: true })
     try {
       const res = await listStoreProxies()
-      storeProxies.value = res.proxies || []
-      storeEnabled.value = true
-      storeChecked.value = true
+      set({
+        storeProxies: res.proxies || [],
+        storeEnabled: true,
+        storeChecked: true,
+      })
     } catch (err: any) {
       if (err?.status === 404) {
-        storeEnabled.value = false
+        set({ storeEnabled: false })
       }
-      storeChecked.value = true
+      set({ storeChecked: true })
     } finally {
-      storeLoading.value = false
+      set({ storeLoading: false })
     }
-  }
+  },
 
-  const checkStoreEnabled = async () => {
-    if (storeChecked.value) return storeEnabled.value
-    await fetchStoreProxies()
-    return storeEnabled.value
-  }
+  checkStoreEnabled: async () => {
+    if (get().storeChecked) return get().storeEnabled
+    await get().fetchStoreProxies()
+    return get().storeEnabled
+  },
 
-  const createProxy = async (data: ProxyDefinition) => {
+  createProxy: async (data) => {
     await createStoreProxy(data)
-    await fetchStoreProxies()
-  }
+    await get().fetchStoreProxies()
+  },
 
-  const updateProxy = async (name: string, data: ProxyDefinition) => {
+  updateProxy: async (name, data) => {
     await updateStoreProxy(name, data)
-    await fetchStoreProxies()
-  }
+    await get().fetchStoreProxies()
+  },
 
-  const deleteProxy = async (name: string) => {
+  deleteProxy: async (name) => {
     await deleteStoreProxy(name)
-    await fetchStoreProxies()
-  }
+    await get().fetchStoreProxies()
+  },
 
-  const toggleProxy = async (name: string, enabled: boolean) => {
+  toggleProxy: async (name, enabled) => {
     const def = await getStoreProxy(name)
     const block = (def as any)[def.type]
     if (block) {
       block.enabled = enabled
     }
     await updateStoreProxy(name, def)
-    await fetchStatus()
-    await fetchStoreProxies()
-  }
+    await get().fetchStatus()
+    await get().fetchStoreProxies()
+  },
 
-  const storeProxyWithStatus = (def: ProxyDefinition): ProxyStatus => {
+  storeProxyWithStatus: (def) => {
     const block = (def as any)[def.type]
     const enabled = block?.enabled !== false
-
     const localIP = block?.localIP || '127.0.0.1'
     const localPort = block?.localPort
     const local_addr = localPort != null ? `${localIP}:${localPort}` : ''
     const remotePort = block?.remotePort
     const remote_addr = remotePort != null ? `:${remotePort}` : ''
     const plugin = block?.plugin?.type || ''
+    const status = get().proxies.find((proxy) => proxy.name === def.name)
 
-    const status = proxies.value.find((p) => p.name === def.name)
     return {
       name: def.name,
       type: def.type,
-      status: !enabled ? 'disabled' : (status?.status || 'waiting'),
+      status: !enabled ? 'disabled' : status?.status || 'waiting',
       err: status?.err || '',
       local_addr: status?.local_addr || local_addr,
       remote_addr: status?.remote_addr || remote_addr,
       plugin: status?.plugin || plugin,
       source: 'store',
     }
-  }
-
-  return {
-    proxies,
-    storeProxies,
-    storeEnabled,
-    storeChecked,
-    loading,
-    storeLoading,
-    error,
-    fetchStatus,
-    fetchStoreProxies,
-    checkStoreEnabled,
-    createProxy,
-    updateProxy,
-    deleteProxy,
-    toggleProxy,
-    storeProxyWithStatus,
-  }
-})
+  },
+}))

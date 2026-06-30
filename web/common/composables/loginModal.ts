@@ -1,11 +1,27 @@
-import { ref } from 'vue'
+let visible = false
+const listeners = new Set<() => void>()
 
-export const loginModalVisible = ref(false)
+const emit = () => {
+  for (const listener of listeners) {
+    listener()
+  }
+}
+
+export const getLoginModalVisible = (): boolean => visible
+
+export const subscribeLoginModal = (listener: () => void): (() => void) => {
+  listeners.add(listener)
+  return () => {
+    listeners.delete(listener)
+  }
+}
 
 export const openLoginModal = (): void => {
-  loginModalVisible.value = true
+  visible = true
+  emit()
 }
 
 export const closeLoginModal = (): void => {
-  loginModalVisible.value = false
+  visible = false
+  emit()
 }

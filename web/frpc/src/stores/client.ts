@@ -1,28 +1,35 @@
-import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { create } from 'zustand'
 import { getConfig, putConfig, reloadConfig } from '../api/frpc'
 
-export const useClientStore = defineStore('client', () => {
-  const config = ref('')
-  const loading = ref(false)
+interface ClientStoreState {
+  config: string
+  loading: boolean
+  fetchConfig: () => Promise<string>
+  saveConfig: (content: string) => Promise<void>
+  reload: () => Promise<void>
+}
 
-  const fetchConfig = async () => {
-    loading.value = true
+export const useClientStore = create<ClientStoreState>((set) => ({
+  config: '',
+  loading: false,
+
+  fetchConfig: async () => {
+    set({ loading: true })
     try {
-      config.value = await getConfig()
+      const config = await getConfig()
+      set({ config })
+      return config
     } finally {
-      loading.value = false
+      set({ loading: false })
     }
-  }
+  },
 
-  const saveConfig = async (text: string) => {
-    await putConfig(text)
-    config.value = text
-  }
+  saveConfig: async (content) => {
+    await putConfig(content)
+    set({ config: content })
+  },
 
-  const reload = async () => {
+  reload: async () => {
     await reloadConfig()
-  }
-
-  return { config, loading, fetchConfig, saveConfig, reload }
-})
+  },
+}))

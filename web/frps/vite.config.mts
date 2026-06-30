@@ -1,19 +1,18 @@
 import { fileURLToPath, URL } from 'node:url'
 
 import { defineConfig } from 'vite'
-import vue from '@vitejs/plugin-vue'
-import svgLoader from 'vite-svg-loader'
+import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
 
 // https://vitejs.dev/config/
 export default defineConfig({
   base: '/static/',
-  plugins: [vue(), svgLoader()],
+  plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
       '@common': fileURLToPath(new URL('../common', import.meta.url)),
     },
-    dedupe: ['vue', 'naive-ui'],
   },
   build: {
     assetsDir: '',

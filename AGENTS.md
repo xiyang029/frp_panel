@@ -13,7 +13,8 @@
 - 代码文件不得新增头部元数据、版权模板或无关生成标记。
 - 新增或修改变量、方法、类型、配置字段时，需用功能性命名；必要注释说明用途、边界或非显然行为，避免重复代码字面含义。
 - 优先复用现有目录、包边界、命名风格和错误处理方式。
-- Go 代码保持 `gofmt` 结果；Web 代码遵循现有 Vue、TypeScript、Naive ui、Pinia 和 Vite 写法。
+- Go 代码保持 `gofmt` 结果；Web 代码遵循现有 React、TypeScript、Tailwind CSS v4、shadcn/ui、Zustand 和 Vite 写法。
+- Web UI 使用 shadcn/ui 时，初始化与组件添加必须通过 `pnpm dlx shadcn@latest init` / `pnpm dlx shadcn@latest add` 执行；不得手写 `components.json`、Tailwind/shadcn 生成配置或手动拷贝 registry 组件源码。
 - 配置示例、文档和测试样例必须与实际行为一致，不写未实现能力。
 - 修改完成时必须给出“变更摘要”和“受影响文件列表”。
 
@@ -22,7 +23,7 @@
 - 仅文档变更：检查目标 Markdown 内容可读、路径引用准确，可运行 `git diff --check -- AGENTS.md docs/项目文件架构.md`。
 - Go 逻辑变更：优先运行受影响包的 `go test ./...` 子集；跨包行为扩大到相关目录或全量 `go test ./...`。
 - CLI、配置、认证、代理、网络协议或兼容性变更：补充或更新对应单元测试；如需端到端验证，按当前仓库实际测试入口执行，不引用已删除的 `make` 或 `hack/*.sh` 流程。
-- Web 面板变更：在对应 `web/frpc` 或 `web/frps` 下运行 `npm run type-check`、`npm run build`，必要时运行 `npm run lint`。
+- Web 面板变更：优先在 `web` 下运行 `pnpm --filter frpc-dashboard type-check`、`pnpm --filter frps-dashboard type-check` 和对应 `build`，必要时运行对应 `lint`。
 - 构建产物变更：按触达范围运行 `go build -tags "frps" ./cmd/frps`、`go build -tags "frpc" ./cmd/frpc`，Web 资源按需执行 `npm run build`。
 
 ## 常用命令
@@ -43,12 +44,12 @@
 
 - `go fmt ./...` - 运行 Go 格式化
 - `go vet ./...` - 运行 Go vet
-- `npm run lint` - 在对应 Web 子项目下运行 ESLint
+- `pnpm --filter frps-dashboard lint` / `pnpm --filter frpc-dashboard lint` - 运行对应 Web 面板 ESLint
 
 ### Assets
 
-- `npm --prefix .\web\frps run build` - 构建 `frps` Web 管理面板
-- `npm --prefix .\web\frpc run build` - 构建 `frpc` Web 管理面板
+- `pnpm --dir .\web --filter frps-dashboard build` - 构建 `frps` Web 管理面板
+- `pnpm --dir .\web --filter frpc-dashboard build` - 构建 `frpc` Web 管理面板
 
 ### Cleanup
 

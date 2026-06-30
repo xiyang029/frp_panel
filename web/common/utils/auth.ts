@@ -3,6 +3,9 @@ export interface DashboardAuth {
   password: string
 }
 
+const buildBasicAuthHeaderFromAuth = (auth: DashboardAuth): string =>
+  `Basic ${window.btoa(`${auth.username}:${auth.password}`)}`
+
 export const getDashboardAuth = (
   storageKey: string,
 ): DashboardAuth | null => {
@@ -46,7 +49,7 @@ export const buildBasicAuthHeader = (
   if (!auth) {
     return null
   }
-  return `Basic ${window.btoa(`${auth.username}:${auth.password}`)}`
+  return buildBasicAuthHeaderFromAuth(auth)
 }
 
 export const probeDashboardAuthRequired = async (
@@ -57,4 +60,18 @@ export const probeDashboardAuthRequired = async (
     method: 'GET',
   })
   return response.status === 401
+}
+
+export const verifyDashboardAuth = async (
+  probePath: string,
+  auth: DashboardAuth,
+): Promise<boolean> => {
+  const response = await fetch(probePath, {
+    credentials: 'include',
+    method: 'GET',
+    headers: {
+      Authorization: buildBasicAuthHeaderFromAuth(auth),
+    },
+  })
+  return response.ok
 }

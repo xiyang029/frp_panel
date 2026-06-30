@@ -5,10 +5,11 @@ import {
   hasDashboardAuth as hasDashboardAuthBase,
   probeDashboardAuthRequired as probeDashboardAuthRequiredBase,
   setDashboardAuth as setDashboardAuthBase,
+  verifyDashboardAuth as verifyDashboardAuthBase,
   type DashboardAuth,
 } from '@common/utils/auth'
 
-const STORAGE_KEY = 'frpc-dashboard-auth'
+export const STORAGE_KEY = 'frpc-dashboard-auth'
 const AUTH_PROBE_PATH = '/api/status'
 
 export type { DashboardAuth }
@@ -32,3 +33,8 @@ export const buildBasicAuthHeader = (): string | null =>
 
 export const probeDashboardAuthRequired = async (): Promise<boolean> =>
   probeDashboardAuthRequiredBase(AUTH_PROBE_PATH)
+
+export const verifyDashboardAuth = async (): Promise<boolean> => {
+  const auth = getDashboardAuth()
+  return auth ? verifyDashboardAuthBase(AUTH_PROBE_PATH, auth) : false
+}

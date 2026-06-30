@@ -1,5 +1,17 @@
 {
   "name": "frp-web",
   "private": true,
+  "packageManager": "pnpm@11.7.0",
+  "dependencies": {
+    "lucide-react": "^1.22.0",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.3",
+    "react-router": "^8.0.1",
+    "sonner": "^2.0.7"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3"
+  },
   "workspaces": ["frpc", "frps"]
 }

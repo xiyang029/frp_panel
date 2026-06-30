@@ -1,68 +1,67 @@
-import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { create } from 'zustand'
 import type { VisitorDefinition } from '../types'
 import {
-  listStoreVisitors,
   createStoreVisitor,
-  updateStoreVisitor,
   deleteStoreVisitor,
+  listStoreVisitors,
+  updateStoreVisitor,
 } from '../api/frpc'
 
-export const useVisitorStore = defineStore('visitor', () => {
-  const storeVisitors = ref<VisitorDefinition[]>([])
-  const storeEnabled = ref(false)
-  const storeChecked = ref(false)
-  const loading = ref(false)
-  const error = ref<string | null>(null)
+interface VisitorStoreState {
+  visitors: VisitorDefinition[]
+  storeEnabled: boolean
+  storeChecked: boolean
+  loading: boolean
+  fetchStoreVisitors: () => Promise<void>
+  checkStoreEnabled: () => Promise<boolean>
+  createVisitor: (data: VisitorDefinition) => Promise<void>
+  updateVisitor: (name: string, data: VisitorDefinition) => Promise<void>
+  deleteVisitor: (name: string) => Promise<void>
+}
 
-  const fetchStoreVisitors = async () => {
-    loading.value = true
+export const useVisitorStore = create<VisitorStoreState>((set, get) => ({
+  visitors: [],
+  storeEnabled: false,
+  storeChecked: false,
+  loading: false,
+
+  fetchStoreVisitors: async () => {
+    set({ loading: true })
     try {
       const res = await listStoreVisitors()
-      storeVisitors.value = res.visitors || []
-      storeEnabled.value = true
-      storeChecked.value = true
+      set({
+        visitors: res.visitors || [],
+        storeEnabled: true,
+        storeChecked: true,
+      })
     } catch (err: any) {
       if (err?.status === 404) {
-        storeEnabled.value = false
+        set({ storeEnabled: false })
       }
-      storeChecked.value = true
+      set({ storeChecked: true })
     } finally {
-      loading.value = false
+      set({ loading: false })
     }
-  }
+  },
 
-  const checkStoreEnabled = async () => {
-    if (storeChecked.value) return storeEnabled.value
-    await fetchStoreVisitors()
-    return storeEnabled.value
-  }
+  checkStoreEnabled: async () => {
+    if (get().storeChecked) return get().storeEnabled
+    await get().fetchStoreVisitors()
+    return get().storeEnabled
+  },
 
-  const createVisitor = async (data: VisitorDefinition) => {
+  createVisitor: async (data) => {
     await createStoreVisitor(data)
-    await fetchStoreVisitors()
-  }
+    await get().fetchStoreVisitors()
+  },
 
-  const updateVisitor = async (name: string, data: VisitorDefinition) => {
+  updateVisitor: async (name, data) => {
     await updateStoreVisitor(name, data)
-    await fetchStoreVisitors()
-  }
+    await get().fetchStoreVisitors()
+  },
 
-  const deleteVisitor = async (name: string) => {
+  deleteVisitor: async (name) => {
     await deleteStoreVisitor(name)
-    await fetchStoreVisitors()
-  }
-
-  return {
-    storeVisitors,
-    storeEnabled,
-    storeChecked,
-    loading,
-    error,
-    fetchStoreVisitors,
-    checkStoreEnabled,
-    createVisitor,
-    updateVisitor,
-    deleteVisitor,
-  }
-})
+    await get().fetchStoreVisitors()
+  },
+}))

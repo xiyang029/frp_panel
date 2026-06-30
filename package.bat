@@ -12,8 +12,8 @@ where go >nul 2>nul || (
   echo missing command: go
   exit /b 1
 )
-where npm >nul 2>nul || (
-  echo missing command: npm
+where pnpm >nul 2>nul || (
+  echo missing command: pnpm
   exit /b 1
 )
 where tar >nul 2>nul || (
@@ -30,15 +30,19 @@ mkdir "%BIN_DIR%" >nul
 mkdir "%PACKAGES_DIR%" >nul
 
 echo [1/6] Installing frontend dependencies
-call npm --prefix "%WEB_DIR%" install --registry="%NPM_REGISTRY%" --no-fund --no-audit
+pushd "%WEB_DIR%" || goto :fail
+call pnpm install --registry="%NPM_REGISTRY%"
+set "INSTALL_EXIT=%ERRORLEVEL%"
+popd
+if not "%INSTALL_EXIT%"=="0" goto :fail
 if errorlevel 1 goto :fail
 
 echo [2/6] Building frps web assets
-call npm --prefix "%WEB_DIR%\frps" run build
+call pnpm --dir "%WEB_DIR%" --filter frps-dashboard build
 if errorlevel 1 goto :fail
 
 echo [3/6] Building frpc web assets
-call npm --prefix "%WEB_DIR%\frpc" run build
+call pnpm --dir "%WEB_DIR%" --filter frpc-dashboard build
 if errorlevel 1 goto :fail
 
 echo [4/6] Building Windows binaries

@@ -1,0 +1,5 @@
+packages:
+  - frpc
+  - frps
+minimumReleaseAgeExclude:
+  - lucide-react@1.22.0
