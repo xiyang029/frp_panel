@@ -12,7 +12,11 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from '@/components/ui/chart'
 import { InfoGrid } from '@common/components/InfoGrid'
 import { EmptyState, LoadingState, PageSection } from '@common/components/Page'
 import { getProxyByName, getProxyTraffic } from '../api/proxy'
@@ -89,8 +93,10 @@ export default function ProxyDetail() {
   }, [name])
 
   const trafficSummary = useMemo(() => {
-    const inTotal = traffic?.trafficIn?.reduce((sum, value) => sum + value, 0) || 0
-    const outTotal = traffic?.trafficOut?.reduce((sum, value) => sum + value, 0) || 0
+    const inTotal =
+      traffic?.trafficIn?.reduce((sum, value) => sum + value, 0) || 0
+    const outTotal =
+      traffic?.trafficOut?.reduce((sum, value) => sum + value, 0) || 0
     return { inTotal, outTotal }
   }, [traffic])
 
@@ -176,10 +182,13 @@ export default function ProxyDetail() {
         <CardContent>
           {traffic ? (
             <>
-              <ChartContainer config={trafficChartConfig} className="h-80 w-full">
+              <ChartContainer
+                config={trafficChartConfig}
+                className="h-80 w-full"
+              >
                 <BarChart
                   data={trafficChartData}
-                  margin={{ top: 0, right: 0, left: 12, bottom: 0 }}
+                  margin={{ top: 12, right: 0, left: 12, bottom: 0 }}
                   barCategoryGap="24%"
                   barGap={8}
                 >
@@ -192,6 +201,7 @@ export default function ProxyDetail() {
                     padding={{ left: 12, right: 12 }}
                   />
                   <YAxis
+                    width={85}
                     tickLine={false}
                     axisLine={false}
                     tickMargin={12}
@@ -224,7 +234,10 @@ export default function ProxyDetail() {
               </ChartContainer>
             </>
           ) : (
-            <EmptyState title="暂无最近 7 天流量" description="接口未返回历史流量数据" />
+            <EmptyState
+              title="暂无最近 7 天流量"
+              description="接口未返回历史流量数据"
+            />
           )}
         </CardContent>
       </Card>
