@@ -3,8 +3,6 @@ setlocal EnableExtensions EnableDelayedExpansion
 
 set "ROOT=%~dp0"
 set "WEB_DIR=%ROOT%web"
-set "RELEASE_DIR=%ROOT%release"
-set "PACKAGES_DIR=%RELEASE_DIR%\packages"
 set "BIN_DIR=%ROOT%bin"
 set "NPM_REGISTRY=https://registry.npmmirror.com"
 
@@ -22,12 +20,10 @@ where tar >nul 2>nul || (
 )
 
 if exist "%BIN_DIR%" rmdir /s /q "%BIN_DIR%"
-if exist "%RELEASE_DIR%" rmdir /s /q "%RELEASE_DIR%"
 if exist "%WEB_DIR%\node_modules" rmdir /s /q "%WEB_DIR%\node_modules"
 if exist "%WEB_DIR%\frps\node_modules" rmdir /s /q "%WEB_DIR%\frps\node_modules"
 if exist "%WEB_DIR%\frpc\node_modules" rmdir /s /q "%WEB_DIR%\frpc\node_modules"
 mkdir "%BIN_DIR%" >nul
-mkdir "%PACKAGES_DIR%" >nul
 
 echo [1/6] Installing frontend dependencies
 pushd "%WEB_DIR%" || goto :fail
@@ -67,8 +63,8 @@ go build -trimpath -ldflags "-s -w" -tags "frpc" -o "%BIN_DIR%\frpc_linux_amd64"
 if errorlevel 1 goto :fail
 
 echo [6/6] Creating release packages
-set "WINDOWS_PKG=%PACKAGES_DIR%\frp_%FRP_VERSION%_windows_amd64"
-set "LINUX_PKG=%PACKAGES_DIR%\frp_%FRP_VERSION%_linux_amd64"
+set "WINDOWS_PKG=%BIN_DIR%\frp_%FRP_VERSION%_windows_amd64"
+set "LINUX_PKG=%BIN_DIR%\frp_%FRP_VERSION%_linux_amd64"
 
 mkdir "%WINDOWS_PKG%" >nul
 mkdir "%LINUX_PKG%" >nul
@@ -84,17 +80,21 @@ copy /Y "%BIN_DIR%\frps_windows_amd64.exe" "%WINDOWS_PKG%\frps.exe" >nul
 copy /Y "%BIN_DIR%\frpc_linux_amd64" "%LINUX_PKG%\frpc" >nul
 copy /Y "%BIN_DIR%\frps_linux_amd64" "%LINUX_PKG%\frps" >nul
 
-tar -czf "%PACKAGES_DIR%\frp_%FRP_VERSION%_linux_amd64.tar.gz" -C "%PACKAGES_DIR%" "frp_%FRP_VERSION%_linux_amd64"
+tar -czf "%BIN_DIR%\frp_%FRP_VERSION%_linux_amd64.tar.gz" -C "%BIN_DIR%" "frp_%FRP_VERSION%_linux_amd64"
 if errorlevel 1 goto :fail
 
-powershell -NoProfile -ExecutionPolicy Bypass -Command "Compress-Archive -Path '%WINDOWS_PKG%\*' -DestinationPath '%PACKAGES_DIR%\frp_%FRP_VERSION%_windows_amd64.zip' -Force"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "Compress-Archive -Path '%WINDOWS_PKG%\*' -DestinationPath '%BIN_DIR%\frp_%FRP_VERSION%_windows_amd64.zip' -Force"
 if errorlevel 1 goto :fail
 
 rmdir /s /q "%WINDOWS_PKG%"
 rmdir /s /q "%LINUX_PKG%"
+if exist "%BIN_DIR%\frpc_windows_amd64.exe" del /q "%BIN_DIR%\frpc_windows_amd64.exe" >nul
+if exist "%BIN_DIR%\frps_windows_amd64.exe" del /q "%BIN_DIR%\frps_windows_amd64.exe" >nul
+if exist "%BIN_DIR%\frpc_linux_amd64" del /q "%BIN_DIR%\frpc_linux_amd64" >nul
+if exist "%BIN_DIR%\frps_linux_amd64" del /q "%BIN_DIR%\frps_linux_amd64" >nul
 
 echo done
-echo release artifacts are in %PACKAGES_DIR%
+echo release artifacts are in %BIN_DIR%
 exit /b 0
 
 :fail
